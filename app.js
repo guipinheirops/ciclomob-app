@@ -1,3 +1,4 @@
+const launchSplashStarted=performance.now();function dismissLaunchSplash(){const s=document.querySelector('#launchSplash');if(!s)return;const w=Math.max(0,850-(performance.now()-launchSplashStarted));setTimeout(()=>{s.classList.add('is-hidden');setTimeout(()=>s.remove(),320)},w)}
 const app = document.querySelector('#app');
 const title = document.querySelector('#pageTitle');
 const backBtn = document.querySelector('#backBtn');
@@ -401,3 +402,5 @@ function toggleTheme(){state.settings.theme=state.settings.theme==='dark'?'light
 document.documentElement.dataset.theme=state.settings.theme;
 if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js');
 initAuth();
+
+window.addEventListener('load',()=>setTimeout(dismissLaunchSplash,80),{once:true});

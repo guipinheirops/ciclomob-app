@@ -1,4 +1,4 @@
-const CACHE='ciclo-mob-v39';
+const CACHE='ciclo-mob-v40';
 const META_CACHE='cycleseed-meta';
 const ASSETS=['./','./index.html','./styles.css','./app.js','./config.js','./manifest.webmanifest','./icons/icon-192.png','./icons/favicon.svg'];
 
