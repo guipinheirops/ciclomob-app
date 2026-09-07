@@ -1,16 +1,32 @@
-# Cakto → Ciclo MOB (v36)
+# Cakto → Ciclo MOB
 
 1. Execute `supabase/subscriptions.sql` no SQL Editor.
-2. Publique a função:
-   `supabase functions deploy cakto-webhook --no-verify-jwt`
-3. Configure Secrets:
-   - `CAKTO_WEBHOOK_SECRET`: o secret do webhook criado na Cakto.
-   - `APP_URL`: URL pública do Ciclo MOB (ou `http://localhost:4174` apenas para teste).
-   - `SUPABASE_SERVICE_ROLE_KEY`: mantenha somente nos Secrets do Supabase.
-4. Na Cakto, configure a URL:
-   `https://SEU_PROJECT_REF.supabase.co/functions/v1/cakto-webhook`
-5. Eventos recomendados:
-   `purchase_approved`, `subscription_created`, `subscription_renewed`,
-   `subscription_canceled`, `subscription_renewal_refused`, `refund`, `chargeback`.
 
-O frontend nunca recebe a service_role. A conta é criada no backend após evento de pagamento aprovado e a usuária recebe recuperação de senha para definir sua senha.
+2. Publique novamente a função:
+
+```bash
+npx supabase functions deploy cakto-webhook --project-ref heglcvgpverqfmqpdyok --no-verify-jwt
+```
+
+3. Confirme os Secrets:
+- `CAKTO_WEBHOOK_SECRET` = secret REAL do webhook da Cakto
+- `APP_URL` = `https://app.ciclomob.cuidadosdamulher.com.br`
+
+4. URL do webhook:
+`https://heglcvgpverqfmqpdyok.supabase.co/functions/v1/cakto-webhook`
+
+5. A função agora usa diretamente:
+- `secret`
+- `event`
+- `data.id` como ID único da compra
+- `data.refId`
+- `data.customer.email`
+- `data.customer.name`
+- `data.product.id`
+- `data.product.name`
+- `data.offer.id`
+- `data.offer.name`
+- `data.subscription`
+- `data.status`
+
+6. Reenvios do mesmo webhook atualizam o registro existente em vez de criar duplicidade.
