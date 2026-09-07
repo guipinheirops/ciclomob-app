@@ -717,3 +717,9 @@ body.dark .branded-feature-card .progress i{
 
 /* v45 — aviso de atualização do PWA */
 .app-update-notice{position:fixed;z-index:12000;left:50%;bottom:calc(78px + env(safe-area-inset-bottom));transform:translateX(-50%);width:min(calc(100% - 28px),430px);box-sizing:border-box;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:18px;padding:13px;box-shadow:0 16px 44px rgba(0,0,0,.22);display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center}.app-update-notice strong,.app-update-notice small{display:block}.app-update-notice small{font-size:.69rem;color:var(--muted);margin-top:3px}.app-update-notice button{margin:0;padding:10px 12px;font-size:.72rem;white-space:nowrap}
+
+/* v48 — correções do card de acesso protegido */
+.auth-reset-help{grid-template-columns:24px minmax(0,1fr) !important}
+.auth-reset-help > div{min-width:0}
+.auth-reset-help strong,.auth-reset-help small{overflow-wrap:anywhere;word-break:normal}
+.auth-reset-help small{font-size:.82rem}

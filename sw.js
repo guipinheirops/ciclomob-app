@@ -1,6 +1,6 @@
 self.addEventListener('message',event=>{if(event.data?.type==='SKIP_WAITING')self.skipWaiting()});
 
-const CACHE='ciclo-mob-v47';
+const CACHE='ciclo-mob-v48';
 const META_CACHE='cycleseed-meta';
 const ASSETS=['./','./index.html','./styles.css','./app.js','./config.js','./manifest.webmanifest','./icons/icon-192.png','./icons/favicon.svg'];
 
