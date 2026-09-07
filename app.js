@@ -225,7 +225,7 @@ function markProfileConfigured(){localStorage.setItem(profileSetupKey(),'1');sta
 function reminderSettingsCard(){
  const pushSupported='serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
  const pushActive=window.Notification?.permission==='granted' && Boolean(localStorage.getItem('cycleseed.push.active'));
- return `<section class="hero-card reminder-hero branded-feature-card"><span class="pill">Lembretes</span><h2>Não deixe o registro do dia passar</h2><p class="muted">Escolha um horário e, quando permitido pelo aparelho, receba um aviso mesmo com o PWA fechado.</p></section><section class="card"><div class="stack"><div class="feature-status"><i class="status-dot ${pushActive?'ok':'warn'}"></i><div><b>${pushActive?'Push ativado':'Push não ativado'}</b><small>${pushSupported?'Compatível com este navegador.':'Este navegador não oferece Web Push.'}</small></div></div><div class="profile-row"><div><strong>Lembrete diário</strong><div class="label">Lembrar de registrar o dia</div></div><button class="switch ${state.settings.reminder?'on':''}" data-setting="reminder"></button></div><div class="profile-row"><div><strong>Horário</strong><div class="label">Horário local</div></div><input id="reminderTime" type="time" value="${state.settings.reminderTime}"></div><div class="action-grid"><button id="enablePushBtn" class="primary">${pushActive?'Atualizar push':'Ativar notificações'}</button><button id="testPushBtn" class="secondary">Enviar teste</button></div><p class="subtle">Para push real em segundo plano, configure VAPID + Supabase e agende a Edge Function incluída no projeto.</p></div></section>`
+ return `<section class="hero-card reminder-hero branded-feature-card"><span class="pill">Lembretes</span><h2>Não deixe o registro do dia passar</h2><p class="muted">Escolha um horário e, quando permitido pelo aparelho, receba um aviso mesmo com o PWA fechado.</p></section><section class="card"><div class="stack"><div class="feature-status"><i class="status-dot ${pushActive?'ok':'warn'}"></i><div><b>${pushActive?'Push ativado':'Push não ativado'}</b><small>${pushSupported?'Compatível com este navegador.':'Este navegador não oferece Web Push.'}</small></div></div><div class="profile-row"><div><strong>Lembrete diário</strong><div class="label">Lembrar de registrar o dia</div></div><button class="switch ${state.settings.reminder?'on':''}" data-setting="reminder"></button></div><div class="profile-row"><div><strong>Horário</strong><div class="label">Horário local</div></div><input id="reminderTime" type="time" value="${state.settings.reminderTime}"></div><div class="action-grid"><button id="enablePushBtn" class="primary">${pushActive?'Atualizar push':'Ativar notificações'}</button><button id="testPushBtn" class="secondary">Enviar teste</button></div><p class="subtle">Ative as notificações e mantenha o horário desejado. O lembrete será enviado mesmo com o PWA fechado, quando permitido pelo navegador.</p></div></section>`
 }
 function remindersView(){return reminderSettingsCard()}
 function profileView(){
@@ -419,3 +419,31 @@ if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js');
 initAuth();
 
 window.addEventListener('load',()=>setTimeout(dismissLaunchSplash,80),{once:true});
+
+
+let swRegistration=null;
+let pendingServiceWorker=null;
+function showUpdateNotice(){
+ if(document.querySelector('#appUpdateNotice'))return;
+ const el=document.createElement('div');el.id='appUpdateNotice';el.className='app-update-notice';
+ el.innerHTML=`<div><strong>Nova versão disponível</strong><small>Atualize o Ciclo MOB para receber as melhorias.</small></div><button id="applyAppUpdate" class="primary">Atualizar agora</button>`;
+ document.body.appendChild(el);
+ el.querySelector('#applyAppUpdate').onclick=()=>{pendingServiceWorker?.postMessage({type:'SKIP_WAITING'})};
+}
+async function checkForAppUpdate(){try{if(swRegistration)await swRegistration.update()}catch(_){}}
+if('serviceWorker' in navigator){
+ navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).then(reg=>{
+   swRegistration=reg;
+   if(reg.waiting){pendingServiceWorker=reg.waiting;showUpdateNotice()}
+   reg.addEventListener('updatefound',()=>{
+     const worker=reg.installing;if(!worker)return;
+     worker.addEventListener('statechange',()=>{if(worker.state==='installed'&&navigator.serviceWorker.controller){pendingServiceWorker=worker;showUpdateNotice()}});
+   });
+ }).catch(console.warn);
+ let refreshing=false;
+ navigator.serviceWorker.addEventListener('controllerchange',()=>{if(refreshing)return;refreshing=true;location.reload()});
+ document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')checkForAppUpdate()});
+ window.addEventListener('focus',checkForAppUpdate);
+ setInterval(checkForAppUpdate,60*60*1000);
+}
+

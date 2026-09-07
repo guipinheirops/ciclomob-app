@@ -1,4 +1,6 @@
-const CACHE='ciclo-mob-v42';
+self.addEventListener('message',event=>{if(event.data?.type==='SKIP_WAITING')self.skipWaiting()});
+
+const CACHE='ciclo-mob-v45';
 const META_CACHE='cycleseed-meta';
 const ASSETS=['./','./index.html','./styles.css','./app.js','./config.js','./manifest.webmanifest','./icons/icon-192.png','./icons/favicon.svg'];
 
@@ -16,10 +18,18 @@ self.addEventListener('activate',event=>{
 
 self.addEventListener('fetch',event=>{
   if(event.request.method!=='GET') return;
+  const url=new URL(event.request.url);
+  const sameOrigin=url.origin===self.location.origin;
+  const core=sameOrigin && (url.pathname==='/' || /\/(index\.html|app\.js|styles\.css|config\.js|manifest\.webmanifest)$/.test(url.pathname));
+  if(core){
+    event.respondWith(fetch(event.request,{cache:'no-store'}).then(response=>{
+      if(response.ok){const copy=response.clone();caches.open(CACHE).then(cache=>cache.put(event.request,copy))}
+      return response;
+    }).catch(()=>caches.match(event.request).then(r=>r||caches.match('./index.html'))));
+    return;
+  }
   event.respondWith(caches.match(event.request).then(cached=>cached||fetch(event.request).then(response=>{
-    if(response.ok && new URL(event.request.url).origin===self.location.origin){
-      const copy=response.clone();caches.open(CACHE).then(cache=>cache.put(event.request,copy));
-    }
+    if(response.ok&&sameOrigin){const copy=response.clone();caches.open(CACHE).then(cache=>cache.put(event.request,copy))}
     return response;
   }).catch(()=>caches.match('./index.html'))));
 });
