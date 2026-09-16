@@ -1063,3 +1063,75 @@ body.dark .lesson-hero.branded-feature-card{
   .profile-data-actions{gap:7px}
   .profile-data-actions button{font-size:.68rem;padding-left:7px;padding-right:7px}
 }
+
+/* v56 — correções de Perfil e espaçamento do Aprender */
+
+/* Botão Sair dentro do card superior do usuário */
+.account-card-top{
+  display:grid !important;
+  grid-template-columns:46px minmax(0,1fr) auto !important;
+  align-items:center !important;
+  gap:12px !important;
+}
+.account-card-copy{
+  min-width:0;
+}
+.account-card-copy strong,
+.account-card-copy small{
+  display:block;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.account-logout-btn{
+  display:inline-flex !important;
+  align-items:center;
+  justify-content:center;
+  margin:0 !important;
+  width:auto !important;
+  min-width:64px;
+  padding:9px 12px !important;
+  font-size:.72rem !important;
+  white-space:nowrap;
+  justify-self:end;
+}
+
+/* Baixar backup + Apagar dados locais lado a lado, inclusive no mobile */
+.profile-data-actions{
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr) !important;
+  gap:10px !important;
+  align-items:stretch;
+}
+.profile-data-actions button{
+  width:100% !important;
+  min-width:0 !important;
+  min-height:44px;
+  margin:0 !important;
+  padding-left:10px !important;
+  padding-right:10px !important;
+}
+
+/* Um pouco mais de espaço entre os cards internos dos módulos */
+.lesson-content{
+  gap:8px !important;
+}
+
+@media(max-width:360px){
+  .account-card-top{
+    grid-template-columns:42px minmax(0,1fr) auto !important;
+    gap:9px !important;
+  }
+  .account-logout-btn{
+    min-width:56px;
+    padding:8px 9px !important;
+    font-size:.68rem !important;
+  }
+  .profile-data-actions{
+    gap:7px !important;
+  }
+  .profile-data-actions button{
+    font-size:.66rem !important;
+    padding-left:6px !important;
+    padding-right:6px !important;
+  }
+}
