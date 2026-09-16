@@ -944,3 +944,16 @@ body.dark .lesson-hero.branded-feature-card{
 .lesson-hero.branded-feature-card .pill{
   color:#fff !important;
 }
+
+/* v53 — exibição temporária da senha */
+.auth-input-wrap{position:relative}
+.auth-input-wrap input[type="password"],
+.auth-input-wrap input[data-password-field]{padding-right:44px}
+.password-reveal{
+  position:absolute;right:7px;top:50%;transform:translateY(-50%);
+  width:34px;height:34px;border:0;background:transparent;color:var(--muted);
+  display:grid;place-items:center;border-radius:10px;cursor:pointer;padding:0;
+  touch-action:none;-webkit-user-select:none;user-select:none;
+}
+.password-reveal svg{width:19px;height:19px}
+.password-reveal.active{color:var(--brand);background:var(--surface-2)}

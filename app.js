@@ -261,15 +261,40 @@ function profileView(){
  ${sessionCard}`
 }
 
+
+function translateAuthMessage(error,fallback='Não foi possível concluir a operação'){
+ const raw=String(error?.message||error||'').trim(),m=raw.toLowerCase();
+ const map=[
+  ['invalid login credentials','E-mail ou senha incorretos.'],
+  ['email not confirmed','Seu e-mail ainda não foi confirmado.'],
+  ['user not found','Não encontramos uma conta com esse e-mail.'],
+  ['password should be at least','A senha deve ter pelo menos 8 caracteres.'],
+  ['password is too short','A senha deve ter pelo menos 8 caracteres.'],
+  ['new password should be different','Escolha uma senha diferente da anterior.'],
+  ['same password','Escolha uma senha diferente da anterior.'],
+  ['token has expired','Este link expirou. Solicite um novo e-mail de recuperação.'],
+  ['token expired','Este link expirou. Solicite um novo e-mail de recuperação.'],
+  ['invalid token','Este link de recuperação é inválido. Solicite um novo.'],
+  ['otp expired','Este link expirou. Solicite um novo e-mail de recuperação.'],
+  ['email rate limit exceeded','Muitas tentativas em pouco tempo. Aguarde alguns minutos e tente novamente.'],
+  ['rate limit','Muitas tentativas em pouco tempo. Aguarde alguns minutos e tente novamente.'],
+  ['for security purposes','Aguarde alguns instantes antes de tentar novamente.'],
+  ['network request failed','Não foi possível conectar. Verifique sua internet e tente novamente.'],
+  ['failed to fetch','Não foi possível conectar. Verifique sua internet e tente novamente.']
+ ];
+ for(const [needle,text] of map)if(m.includes(needle))return text;
+ return raw&&/^[\x00-\x7F]+$/.test(raw)&&/[a-z]/i.test(raw)?fallback:raw||fallback;
+}
+
 function authView(){
  return `<div class="auth-card auth-modern"><div class="auth-brand auth-brand-modern"><img class="auth-logo-image" src="./icons/logo-ciclo-mob.png" alt="Ciclo MOB"><div class="auth-wordmark"><span>Ciclo MOB</span><small>Acompanhamento do ciclo</small></div></div><div class="auth-intro"><span class="pill">Bem-vinda</span><h1>Seu ciclo, organizado todos os dias.</h1><p>Entre com o e-mail usado na compra para acessar seus registros, histórico e aprendizado.</p></div>
  <form id="authForm" class="stack auth-form">
  <div class="field"><label>E-mail</label><div class="auth-input-wrap"><svg viewBox="0 0 24 24" fill="none"><path d="M4 6.5h16v11H4z" stroke="currentColor" stroke-width="1.7"/><path d="m5 7.5 7 5 7-5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg><input name="email" type="email" autocomplete="email" inputmode="email" placeholder="voce@email.com" required></div></div>
- <div class="field"><div class="auth-label-row"><label>Senha</label><button id="resetPasswordBtn" class="link-btn" type="button">Esqueci minha senha</button></div><div class="auth-input-wrap"><svg viewBox="0 0 24 24" fill="none"><rect x="5" y="10" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M8.5 10V7.8a3.5 3.5 0 0 1 7 0V10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg><input name="password" type="password" autocomplete="current-password" minlength="6" placeholder="Sua senha" required></div></div>
+ <div class="field"><div class="auth-label-row"><label>Senha</label><button id="resetPasswordBtn" class="link-btn" type="button">Esqueci minha senha</button></div><div class="auth-input-wrap"><svg viewBox="0 0 24 24" fill="none"><rect x="5" y="10" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M8.5 10V7.8a3.5 3.5 0 0 1 7 0V10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg><input name="password" type="password" autocomplete="current-password" minlength="6" placeholder="Sua senha" required><button class="password-reveal" type="button" data-password-reveal aria-label="Segure para mostrar a senha"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M2.8 12s3.3-5.2 9.2-5.2S21.2 12 21.2 12 17.9 17.2 12 17.2 2.8 12 2.8 12Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="2.3" stroke="currentColor" stroke-width="1.7"/></svg></button></div></div>
  <button class="primary auth-submit" type="submit" ${state.authLoading?'disabled':''}>${state.authLoading?'Aguarde...':'Entrar'}</button>
  </form>
- <section class="auth-paid-note"><strong>Seu acesso é liberado após a confirmação do pagamento na Cakto.</strong><small>Você receberá por e-mail as instruções para definir sua senha e acessar o Ciclo MOB.</small></section>
- <p class="auth-helper">${supabaseReady?'Acesso seguro conectado ao Supabase Auth.':'Supabase ainda não configurado.'}</p></div>`
+ <section class="auth-paid-note"><strong>Seu acesso é liberado após a confirmação do pagamento.</strong><small>Você receberá por e-mail as instruções para definir sua senha e acessar o Ciclo MOB.</small></section>
+ <p class="auth-helper">Acesso seguro</p></div>`
 }
 function passwordResetView(){
  return `<div class="auth-card auth-modern auth-reset-card">
@@ -291,7 +316,7 @@ function passwordResetView(){
 }
 
 function passwordSetupView(){
- return `<div class="auth-card auth-modern auth-reset-card"><div class="auth-brand auth-brand-modern auth-reset-brand"><img class="auth-logo-image" src="./icons/logo-ciclo-mob.png" alt="Ciclo MOB"><div class="auth-wordmark"><span>Ciclo MOB</span></div></div><div class="auth-intro auth-reset-intro"><span class="pill">Primeiro acesso</span><h1>Defina sua senha</h1><p>Crie uma senha segura para acessar o Ciclo MOB.</p></div><form id="passwordSetupForm" class="stack auth-form"><div class="field"><label>Nova senha</label><div class="auth-input-wrap"><input name="password" type="password" minlength="8" autocomplete="new-password" placeholder="Mínimo de 8 caracteres" required></div></div><div class="field"><label>Confirmar senha</label><div class="auth-input-wrap"><input name="confirmPassword" type="password" minlength="8" autocomplete="new-password" placeholder="Digite novamente" required></div></div><button class="primary auth-submit" type="submit" ${state.passwordSaving?'disabled':''}>${state.passwordSaving?'Salvando...':'Criar minha senha'}</button></form><section class="auth-reset-help"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3.5 5.5 6v5.2c0 4.05 2.6 7.7 6.5 8.9 3.9-1.2 6.5-4.85 6.5-8.9V6L12 3.5Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="m9.3 12.1 1.8 1.8 3.6-3.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><div><strong>Acesso protegido</strong><small>Depois de criar sua senha, entre usando o mesmo e-mail informado na compra.</small></div></section></div>`
+ return `<div class="auth-card auth-modern auth-reset-card"><div class="auth-brand auth-brand-modern auth-reset-brand"><img class="auth-logo-image" src="./icons/logo-ciclo-mob.png" alt="Ciclo MOB"><div class="auth-wordmark"><span>Ciclo MOB</span></div></div><div class="auth-intro auth-reset-intro"><span class="pill">Primeiro acesso</span><h1>Defina sua senha</h1><p>Crie uma senha segura para acessar o Ciclo MOB.</p></div><form id="passwordSetupForm" class="stack auth-form"><div class="field"><label>Nova senha</label><div class="auth-input-wrap"><input name="password" type="password" minlength="8" autocomplete="new-password" placeholder="Mínimo de 8 caracteres" required><button class="password-reveal" type="button" data-password-reveal aria-label="Segure para mostrar a senha"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M2.8 12s3.3-5.2 9.2-5.2S21.2 12 21.2 12 17.9 17.2 12 17.2 2.8 12 2.8 12Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="2.3" stroke="currentColor" stroke-width="1.7"/></svg></button></div></div><div class="field"><label>Confirmar senha</label><div class="auth-input-wrap"><input name="confirmPassword" type="password" minlength="8" autocomplete="new-password" placeholder="Digite novamente" required><button class="password-reveal" type="button" data-password-reveal aria-label="Segure para mostrar a senha"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M2.8 12s3.3-5.2 9.2-5.2S21.2 12 21.2 12 17.9 17.2 12 17.2 2.8 12 2.8 12Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="2.3" stroke="currentColor" stroke-width="1.7"/></svg></button></div></div><button class="primary auth-submit" type="submit" ${state.passwordSaving?'disabled':''}>${state.passwordSaving?'Salvando...':'Criar minha senha'}</button></form><section class="auth-reset-help"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3.5 5.5 6v5.2c0 4.05 2.6 7.7 6.5 8.9 3.9-1.2 6.5-4.85 6.5-8.9V6L12 3.5Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="m9.3 12.1 1.8 1.8 3.6-3.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><div><strong>Acesso protegido</strong><small>Depois de criar sua senha, entre usando o mesmo e-mail informado na compra.</small></div></section></div>`
 }
 async function submitPasswordSetup(e){
  e.preventDefault();const fd=new FormData(e.currentTarget),password=String(fd.get('password')||''),confirm=String(fd.get('confirmPassword')||'');
@@ -299,14 +324,30 @@ async function submitPasswordSetup(e){
  if(password!==confirm){toast('As senhas não coincidem');return}
  state.passwordSaving=true;renderAuth();
  try{const {error}=await db.auth.updateUser({password});if(error)throw error;state.passwordSetup=false;history.replaceState({},'',location.pathname);await db.auth.signOut();state.user=null;toast('Senha criada com sucesso');renderAuth()}
- catch(err){toast(err.message||'Não foi possível criar a senha')}
+ catch(err){toast(translateAuthMessage(err,'Não foi possível criar a senha.'))}
  finally{state.passwordSaving=false}
+}
+
+
+function wirePasswordReveal(){
+ authShell.querySelectorAll('[data-password-reveal]').forEach(btn=>{
+  const wrap=btn.closest('.auth-input-wrap'),input=wrap?.querySelector('input[type="password"],input[data-password-field]');
+  if(!input)return;
+  input.dataset.passwordField='1';
+  const show=e=>{e.preventDefault();input.type='text';btn.classList.add('active')};
+  const hide=()=>{input.type='password';btn.classList.remove('active')};
+  btn.onpointerdown=show;
+  btn.onpointerup=hide;
+  btn.onpointercancel=hide;
+  btn.onpointerleave=hide;
+  btn.oncontextmenu=e=>e.preventDefault();
+ });
 }
 
 function renderAuth(){
  appShell.classList.add('hidden');
  authShell.classList.remove('hidden');
- authShell.innerHTML=state.passwordSetup?passwordSetupView():(state.authReset?passwordResetView():authView());
+ authShell.innerHTML=state.passwordSetup?passwordSetupView():(state.authReset?passwordResetView():authView());wirePasswordReveal();
  if(state.passwordSetup){const form=authShell.querySelector('#passwordSetupForm');if(form)form.onsubmit=submitPasswordSetup;return}
  if(state.authReset){
   const form=authShell.querySelector('#passwordResetForm');if(form)form.onsubmit=submitPasswordReset;
@@ -320,15 +361,20 @@ function renderAuth(){
 }
 async function submitPasswordReset(e){
  e.preventDefault();
- if(!supabaseReady){toast('Supabase ainda não configurado');return}
+ if(!supabaseReady){toast('Serviço de acesso indisponível no momento.');return}
  const fd=new FormData(e.currentTarget),email=String(fd.get('email')||'').trim();
  if(!email)return;
  state.authLoading=true;renderAuth();
  try{
-  const {error}=await db.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});
-  if(error)throw error;
+  const res=await fetch(`${config.SUPABASE_URL}/functions/v1/password-recovery`,{
+   method:'POST',
+   headers:{'Content-Type':'application/json'},
+   body:JSON.stringify({email})
+  });
+  const data=await res.json().catch(()=>({}));
+  if(!res.ok)throw new Error(data?.error||'Não foi possível enviar o e-mail de recuperação.');
   state.authResetSent=true;
- }catch(err){toast(err.message||'Não foi possível enviar o e-mail')}
+ }catch(err){toast(translateAuthMessage(err,'Não foi possível enviar o e-mail de recuperação.'))}
  finally{state.authLoading=false;renderAuth()}
 }
 async function hasPaidAccess(userId){
@@ -339,9 +385,9 @@ async function hasPaidAccess(userId){
 }
 async function handleAuth(e){e.preventDefault();if(!supabaseReady){toast('Supabase ainda não configurado');return}const fd=new FormData(e.currentTarget),email=String(fd.get('email')).trim(),password=String(fd.get('password'));state.authLoading=true;renderAuth();try{
  const {data,error}=await db.auth.signInWithPassword({email,password});if(error)throw error;
- if(!await hasPaidAccess(data.user.id)){await db.auth.signOut();throw new Error('Seu acesso ainda não está ativo. Confirme o pagamento na Cakto ou fale com o suporte.')}
+ if(!await hasPaidAccess(data.user.id)){await db.auth.signOut();throw new Error('Seu acesso ainda não está ativo. Confirme o pagamento ou fale com o suporte.')}
  state.user=data.user;prepareRealUserState(state.user.id);await showApp()
- }catch(err){toast(err.message||'Não foi possível autenticar')}finally{state.authLoading=false;if(!authShell.classList.contains('hidden'))renderAuth()}}
+ }catch(err){toast(translateAuthMessage(err,'Não foi possível entrar. Verifique seus dados e tente novamente.'))}finally{state.authLoading=false;if(!authShell.classList.contains('hidden'))renderAuth()}}
 function consentKey(){return `cycleseed.consent.v1.${state.user?.id||'anonymous'}`}
 function needsConsent(){return state.demoMode?localStorage.getItem(consentKey())!=='accepted':!state.cloudConsentAccepted}
 function showConsent(){let shell=document.querySelector('#consentShell');if(!shell)return;shell.classList.remove('hidden');shell.innerHTML=`<div class="consent-backdrop"><section class="consent-card" role="dialog" aria-modal="true" aria-labelledby="consentTitle"><span class="pill">Primeiro acesso</span><h2 id="consentTitle">Termo de consentimento</h2><div class="consent-copy"><p>Ao utilizar o Ciclo MOB, você poderá registrar informações pessoais relacionadas ao seu ciclo e às suas observações diárias.</p><p><strong>Finalidade:</strong> organizar seus registros, ciclos, histórico, relatórios e recursos de acompanhamento que você decidir utilizar.</p><p><strong>Importante:</strong> o aplicativo é uma ferramenta de organização e educação. Ele não determina fertilidade ou infertilidade, não substitui uma instrutora qualificada do Método de Ovulação Billings e não deve ser usado isoladamente para decisões médicas ou reprodutivas.</p><p>Você é responsável por conferir os dados registrados e por decidir com quem compartilhá-los. Acessos concedidos a parceiro(a), instrutora ou profissional devem ser feitos conscientemente.</p></div><label class="consent-check"><input id="consentCheck" type="checkbox"> <span>Li e concordo com o uso dos meus dados para as finalidades descritas acima.</span></label><button id="acceptConsentBtn" class="primary" disabled>Concordar e continuar</button></section></div>`;const check=shell.querySelector('#consentCheck'),btn=shell.querySelector('#acceptConsentBtn');check.onchange=()=>btn.disabled=!check.checked;btn.onclick=async()=>{btn.disabled=true;try{if(state.demoMode)localStorage.setItem(consentKey(),'accepted');else await saveConsentCloud();shell.classList.add('hidden');shell.innerHTML='';state.route='learn';render();if(!state.demoMode&&db)await bootstrapCloud()}catch(err){console.warn('Consent sync',err);btn.disabled=false;toast('Não foi possível salvar o consentimento. Tente novamente.')}}}
@@ -353,7 +399,14 @@ function showInstallPrompt(){if(isStandalonePwa()||!deferredInstallPrompt||sessi
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstallPrompt=e;setTimeout(showInstallPrompt,500)});
 window.addEventListener('appinstalled',()=>{deferredInstallPrompt=null;document.querySelector('#installPromptShell')?.remove()});
 
-async function initAuth(){document.documentElement.dataset.theme=state.settings.theme;if(localStorage.getItem('cycleseed.demo')==='1'){state.demoMode=true;state.user={email:'demo@cycleseed.local',id:'demo'};await showApp();return}if(!db){renderAuth();return}const {data}=await db.auth.getSession();state.user=data.session?.user||null;if(state.user&&new URLSearchParams(location.search).get('setup_password')==='1'){state.passwordSetup=true;renderAuth();return}if(state.user){if(await hasPaidAccess(state.user.id)){prepareRealUserState(state.user.id);await showApp()}else{await db.auth.signOut();state.user=null;renderAuth()}}else renderAuth();db.auth.onAuthStateChange(async(_event,session)=>{if(_event==='PASSWORD_RECOVERY'||(session&&new URLSearchParams(location.search).get('setup_password')==='1')){state.passwordSetup=true;state.user=session?.user||state.user;renderAuth();return}if(session?.user){const changed=state.user?.id!==session.user.id;state.user=session.user;if(changed)prepareRealUserState(state.user.id);if(authShell&&!authShell.classList.contains('hidden'))await showApp()}else if(!state.demoMode){state.user=null;renderAuth()}})}
+
+function showAuthRedirectError(){
+ const raw=location.hash.startsWith('#')?new URLSearchParams(location.hash.slice(1)):null;
+ const desc=raw?.get('error_description')||raw?.get('error');
+ if(desc){toast(translateAuthMessage({message:decodeURIComponent(desc)},'O link de acesso é inválido ou expirou.'));history.replaceState({},'',location.pathname+location.search)}
+}
+
+async function initAuth(){showAuthRedirectError();document.documentElement.dataset.theme=state.settings.theme;if(localStorage.getItem('cycleseed.demo')==='1'){state.demoMode=true;state.user={email:'demo@cycleseed.local',id:'demo'};await showApp();return}if(!db){renderAuth();return}const {data}=await db.auth.getSession();state.user=data.session?.user||null;if(state.user&&new URLSearchParams(location.search).get('setup_password')==='1'){state.passwordSetup=true;renderAuth();return}if(state.user){if(await hasPaidAccess(state.user.id)){prepareRealUserState(state.user.id);await showApp()}else{await db.auth.signOut();state.user=null;renderAuth()}}else renderAuth();db.auth.onAuthStateChange(async(_event,session)=>{if(_event==='PASSWORD_RECOVERY'||(session&&new URLSearchParams(location.search).get('setup_password')==='1')){state.passwordSetup=true;state.user=session?.user||state.user;renderAuth();return}if(session?.user){const changed=state.user?.id!==session.user.id;state.user=session.user;if(changed)prepareRealUserState(state.user.id);if(authShell&&!authShell.classList.contains('hidden'))await showApp()}else if(!state.demoMode){state.user=null;renderAuth()}})}
 function markReminderUnread(value=true){state.reminderUnread=value;if(value)localStorage.setItem('cycleseed.reminder.unread','1');else localStorage.removeItem('cycleseed.reminder.unread');if('caches' in window&&!value)caches.open('cycleseed-meta').then(cache=>cache.delete('./__reminder_unread__')).catch(()=>{});updateHeaderActions()}
 async function checkReminderUnread(){if(!('caches' in window))return;try{const cache=await caches.open('cycleseed-meta'),hit=await cache.match('./__reminder_unread__');if(hit){state.reminderUnread=true;localStorage.setItem('cycleseed.reminder.unread','1');updateHeaderActions()}}catch(_){}}
 function updateHeaderActions(){const reminderNav=document.querySelector('.nav-item[data-route="reminders"]');reminderNav?.classList.toggle('has-unread',state.reminderUnread);if(homeBellBtn){const onHome=state.route==='today';homeBellBtn.classList.toggle('hidden',!onHome);homeBellBtn.querySelector('.notification-dot')?.classList.toggle('hidden',!state.reminderUnread)}}
