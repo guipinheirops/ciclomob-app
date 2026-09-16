@@ -723,3 +723,224 @@ body.dark .branded-feature-card .progress i{
 .auth-reset-help > div{min-width:0}
 .auth-reset-help strong,.auth-reset-help small{overflow-wrap:anywhere;word-break:normal}
 .auth-reset-help small{font-size:.82rem}
+
+/* v49 — refinamentos Ciclo, Aprender e registros */
+
+/* Card Ciclo com a mesma identidade do card Hoje */
+.cycle-feature-card{position:relative;overflow:hidden}
+.cycle-card-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.cycle-feature-card .cycle-card-top>.label{text-align:left}
+.cycle-feature-card .cycle-arrow{
+  border-color:rgba(255,255,255,.24) !important;
+  background:rgba(255,255,255,.10) !important;
+  color:#fff !important;
+}
+.cycle-feature-card .cycle-arrow:not(:disabled):active{background:rgba(255,255,255,.22) !important}
+.cycle-feature-card .cycle-carousel-copy small{color:rgba(255,255,255,.82) !important}
+.cycle-feature-card .cycle-state{
+  background:rgba(255,255,255,.12) !important;
+  color:#fff !important;
+  border:1px solid rgba(255,255,255,.10);
+}
+.cycle-feature-card .cycle-state.open{
+  background:rgba(255,255,255,.18) !important;
+  color:#fff !important;
+}
+.cycle-feature-card .cycle-position i{background:rgba(255,255,255,.28) !important}
+.cycle-feature-card .cycle-position i.active{background:#fff !important}
+
+/* Ícone de bebê: discreto fora e aceso no período fértil estimado */
+.fertility-baby{
+  width:34px;height:34px;border-radius:50%;display:grid;place-items:center;
+  color:rgba(255,255,255,.34);background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.09);
+  transition:filter .2s ease,color .2s ease,background .2s ease,box-shadow .2s ease,transform .2s ease;
+}
+.fertility-baby svg{width:22px;height:22px}
+.fertility-baby.active{
+  color:#ff82d2;
+  background:rgba(255,130,210,.16);
+  border-color:rgba(255,130,210,.52);
+  box-shadow:0 0 0 3px rgba(255,130,210,.10),0 0 18px rgba(255,93,193,.48);
+  filter:saturate(1.35) brightness(1.12);
+  transform:scale(1.04);
+}
+[data-theme="dark"] .fertility-baby.active,
+body.dark .fertility-baby.active{
+  color:#f6e7ff;
+  background:rgba(223,140,255,.25);
+  border-color:rgba(237,191,255,.68);
+  box-shadow:0 0 0 3px rgba(238,189,255,.13),0 0 19px rgba(222,125,255,.62);
+}
+
+/* Passos internos dos módulos Aprender mais compactos */
+.lesson-content{gap:5px !important}
+
+/* Mais respiro lateral para o selo nos registros do ciclo */
+.mob-graph-row{
+  grid-template-columns:60px minmax(0,1fr) auto !important;
+  gap:13px !important;
+  padding-left:15px !important;
+  padding-right:15px !important;
+}
+.mob-graph-stamp{justify-self:center}
+@media(max-width:360px){
+  .mob-graph-row{
+    grid-template-columns:56px minmax(0,1fr) auto !important;
+    gap:10px !important;
+    padding-left:11px !important;
+    padding-right:11px !important;
+  }
+}
+
+/* v50 — refinamentos Ciclo e calendário */
+
+/* Menos espaço lateral no selo dos registros */
+.mob-graph-row{
+  grid-template-columns:54px minmax(0,1fr) auto !important;
+  gap:10px !important;
+  padding-left:12px !important;
+  padding-right:12px !important;
+}
+@media(max-width:360px){
+  .mob-graph-row{
+    grid-template-columns:52px minmax(0,1fr) auto !important;
+    gap:8px !important;
+    padding-left:10px !important;
+    padding-right:10px !important;
+  }
+}
+
+/* Tipografia do card Ciclo alinhada ao card Hoje */
+.cycle-feature-card .cycle-carousel-copy strong{
+  font-size:1.15rem !important;
+  line-height:1.2 !important;
+  font-weight:800 !important;
+}
+.cycle-feature-card .cycle-carousel-copy small{
+  font-size:.78rem !important;
+  line-height:1.35 !important;
+}
+.cycle-feature-card .cycle-state{
+  font-size:.66rem !important;
+}
+
+/* Fertilidade ao lado do bebê */
+.cycle-card-top{justify-content:flex-end !important}
+.fertility-status{display:flex;align-items:center;gap:8px}
+.fertility-status-text{
+  color:#fff;
+  font-size:.73rem;
+  font-weight:800;
+  letter-spacing:.01em;
+}
+.fertility-baby:not(.active)+.fertility-status-text{opacity:.58}
+.fertility-baby.active+.fertility-status-text{
+  color:#ff9bdd;
+  text-shadow:0 0 12px rgba(255,112,211,.35);
+}
+[data-theme="dark"] .fertility-baby.active+.fertility-status-text,
+body.dark .fertility-baby.active+.fertility-status-text{
+  color:#f6e7ff;
+}
+
+/* Calendário: bolinha vermelha quando houve sangramento */
+.calendar-day.has-record i{
+  background:var(--brand);
+}
+.calendar-day.bleeding i{
+  background:#d93b4f !important;
+  box-shadow:0 0 0 2px color-mix(in srgb,#d93b4f 18%,transparent);
+}
+
+/* v51 — gráfico completo e compacto + card ciclo */
+.cycle-carousel-copy{gap:6px!important}
+.cycle-feature-card .cycle-state{font-size:.78rem!important;padding:5px 10px!important;font-weight:850!important}
+.cycle-fertility-status{margin-top:1px}
+.cycle-fertility-status .fertility-baby{width:30px;height:30px}
+.cycle-fertility-status .fertility-baby svg{width:19px;height:19px}
+.cycle-fertility-status .fertility-status-text{font-size:.68rem}
+
+.mob-graph-head{display:flex;align-items:end;justify-content:space-between;gap:10px;padding:1px 2px 2px}
+.mob-graph-head strong{font-size:.83rem;color:var(--text)}
+.mob-graph-head small{font-size:.64rem;color:var(--muted)}
+.mob-edit-today-notice{margin:3px 0 1px!important;padding:9px 11px!important;font-size:.68rem!important;line-height:1.3!important}
+.compact-cycle-list{gap:6px!important}
+.mob-graph-row.compact{
+  grid-template-columns:40px 36px minmax(0,1fr)!important;
+  min-height:52px!important;
+  padding:6px 9px!important;
+  gap:8px!important;
+  border-radius:11px!important;
+  box-shadow:none!important;
+}
+.mob-graph-row.compact .mob-cycle-day{gap:0!important}
+.mob-graph-row.compact .mob-cycle-day small{font-size:.48rem!important}
+.mob-graph-row.compact .mob-cycle-day strong{font-size:.94rem!important}
+.mob-graph-row.compact .mob-graph-stamp{width:34px!important;height:34px!important;font-size:.8rem!important}
+.mob-graph-row.compact .mob-graph-stamp.red b{font-size:.95rem!important}
+.mob-graph-row.compact .mob-graph-content{gap:2px!important}
+.mob-graph-row.compact .mob-graph-date{font-size:.65rem!important;line-height:1.05!important;color:var(--muted)!important;font-weight:750!important}
+.mob-graph-row.compact .mob-graph-summary{font-size:.72rem!important;line-height:1.18!important;white-space:nowrap!important;overflow:hidden!important}
+.mob-graph-row.compact .mob-graph-summary span{overflow:hidden!important;text-overflow:ellipsis!important}
+.mob-graph-row.compact.empty{opacity:.64;background:color-mix(in srgb,var(--surface-2) 58%,var(--surface))!important}
+.mob-graph-row.compact.is-future{opacity:.48}
+.mob-graph-row.compact.is-today{border-color:color-mix(in srgb,var(--brand) 48%,var(--border))!important}
+.mob-graph-row.compact.is-editable{box-shadow:0 0 0 2px color-mix(in srgb,var(--brand) 9%,transparent)!important}
+@media(max-width:360px){
+ .mob-graph-row.compact{grid-template-columns:36px 32px minmax(0,1fr)!important;padding:6px 7px!important;gap:6px!important}
+ .mob-graph-row.compact .mob-graph-stamp{width:30px!important;height:30px!important}
+ .mob-graph-row.compact .mob-graph-summary{font-size:.67rem!important}
+}
+
+/* v52 — refinamentos solicitados */
+
+/* Nome do ciclo + tag Atual lado a lado */
+.cycle-title-line{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.cycle-title-line strong{
+  font-size:1.15rem !important;
+  line-height:1.2 !important;
+  font-weight:800 !important;
+}
+.cycle-title-line .cycle-state{
+  margin:0 !important;
+  white-space:nowrap;
+}
+
+/* Resumo sem o hero "Resumo pessoal" */
+.summary-metrics{margin-top:0}
+
+/* Passos internos dos módulos Aprender mais próximos */
+.lesson-content{
+  gap:6px !important;
+}
+.lesson-section{
+  margin:0 !important;
+  padding-top:12px !important;
+  padding-bottom:12px !important;
+}
+.lesson-section + .lesson-section{
+  margin-top:0 !important;
+}
+
+/* Cabeçalho de cada módulo segue a paleta dos cards de cabeçalho */
+.lesson-hero.branded-feature-card{
+  background:#6f4e67 !important;
+  color:#fff !important;
+}
+[data-theme="dark"] .lesson-hero.branded-feature-card,
+body.dark .lesson-hero.branded-feature-card{
+  background:#c094b3 !important;
+  color:#fff !important;
+}
+.lesson-hero.branded-feature-card h2,
+.lesson-hero.branded-feature-card p,
+.lesson-hero.branded-feature-card .pill{
+  color:#fff !important;
+}
