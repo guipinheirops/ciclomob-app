@@ -1155,3 +1155,6 @@ body.dark .lesson-hero.branded-feature-card{
     padding-right:7px !important;
   }
 }
+
+/* v60 — estado MOB em observação */
+.fertility-status-text{max-width:150px}
