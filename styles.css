@@ -1187,3 +1187,101 @@ body.dark .lesson-hero.branded-feature-card{
 [data-theme="dark"] .legend .fertile-dot{
   background:#f0c2e1;
 }
+
+/* v62 — relação, fertilidade e calendário */
+
+/* Marcador de registro do calendário acompanha a cor do selo MOB */
+.calendar-day .calendar-record-mark{
+  position:absolute;
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  bottom:5px;
+  background:var(--muted);
+  box-shadow:none;
+}
+.calendar-day .calendar-record-mark.stamp-red{background:#ef3f46}
+.calendar-day .calendar-record-mark.stamp-green{background:#62b84c}
+.calendar-day .calendar-record-mark.stamp-white{
+  background:#f8f8fb;
+  border:1px solid #d9d6dc;
+}
+.calendar-day .calendar-record-mark.stamp-yellow{background:#f4c632}
+.calendar-day .calendar-record-mark.stamp-unclassified{background:var(--muted)}
+
+/* No período fértil não há segunda bolinha: o próprio marcador e o contorno ficam rosa-bebê */
+.calendar-day.mob-fertile-day{
+  box-shadow:inset 0 0 0 1.5px rgba(255,130,210,.72) !important;
+}
+.calendar-day.mob-fertile-day .calendar-record-mark{
+  background:#ff82d2 !important;
+  border:0 !important;
+  box-shadow:0 0 0 2px rgba(255,130,210,.16),0 0 8px rgba(255,93,193,.30);
+}
+.calendar-day .fertile-day-mark{display:none!important}
+.legend .fertile-dot{background:#ff82d2!important}
+
+/* Listagem: dia fértil no mesmo rosa do bebê */
+.mob-cycle-day.fertile-cycle-day{
+  background:rgba(255,130,210,.14) !important;
+  border-color:rgba(255,130,210,.48) !important;
+  color:#ff82d2 !important;
+  box-shadow:0 0 0 2px rgba(255,130,210,.06);
+}
+
+/* Data + ícones */
+.mob-graph-date-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  min-width:0;
+}
+.record-date-icons{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  flex:0 0 auto;
+}
+.record-heart,
+.record-baby{
+  display:inline-grid;
+  place-items:center;
+  flex:0 0 auto;
+}
+.record-heart{
+  color:#ff82d2;
+}
+.record-heart svg{
+  width:15px;
+  height:15px;
+}
+.record-baby{
+  color:#ff82d2;
+}
+.record-baby svg{
+  width:17px;
+  height:17px;
+}
+.inline-heart{
+  display:inline-grid;
+  margin-left:6px;
+  vertical-align:middle;
+}
+.inline-heart svg{
+  width:14px;
+  height:14px;
+}
+
+[data-theme="dark"] .mob-cycle-day.fertile-cycle-day,
+body.dark .mob-cycle-day.fertile-cycle-day{
+  background:rgba(223,140,255,.18) !important;
+  border-color:rgba(237,191,255,.55) !important;
+  color:#f6e7ff !important;
+}
+[data-theme="dark"] .record-heart,
+[data-theme="dark"] .record-baby,
+body.dark .record-heart,
+body.dark .record-baby{
+  color:#f6b8e7;
+}
