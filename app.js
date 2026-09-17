@@ -78,7 +78,18 @@ function esc(s=''){return String(s).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt
 function fmtDate(s,opts={day:'2-digit',month:'short'}){return new Intl.DateTimeFormat('pt-BR',opts).format(new Date(s+'T12:00:00'))}
 function toast(text){const el=document.createElement('div');el.className='toast';el.textContent=text;document.body.appendChild(el);setTimeout(()=>el.remove(),2200)}
 function route(r){state.previousRoute=state.route;if(r==='reminders')markReminderUnread(false);if(r==='today'){const open=currentOpenCycle();if(open)state.activeCycleId=open.id}state.route=r;nav.forEach(b=>b.classList.toggle('active',b.dataset.route===r));render();requestAnimationFrame(()=>window.scrollTo({top:0,left:0,behavior:'auto'}))}
-nav.forEach(b=>b.addEventListener('click',()=>{if(b.dataset.route==='cycle')state.cycleTab='chart';route(b.dataset.route)}));
+nav.forEach(b=>b.addEventListener('click',()=>{
+ const target=b.dataset.route;
+ if(target==='cycle'){
+  if(!state.settings.cycleConfigured||!state.cycles.length){
+   route('profile');
+   toast('Configure seu ciclo no Perfil antes de acessar esta área.');
+   return;
+  }
+  state.cycleTab='chart';
+ }
+ route(target);
+}));
 function daysBetween(a,b){return Math.floor((new Date(b+'T12:00:00')-new Date(a+'T12:00:00'))/86400000)}
 function addDays(s,n){const d=new Date(s+'T12:00:00');d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)}
 function cycleDay(date=TODAY){const c=activeCycle();if(!c)return null;const diff=daysBetween(c.startDate,date);if(diff<0||(c.endDate&&date>c.endDate))return null;return diff+1}
@@ -413,10 +424,10 @@ function updateHeaderActions(){const reminderNav=document.querySelector('.nav-it
 if('serviceWorker' in navigator)navigator.serviceWorker.addEventListener('message',event=>{if(event.data?.type==='REMINDER_RECEIVED')markReminderUnread(true)});
 function urlBase64ToUint8Array(base64String){const padding='='.repeat((4-base64String.length%4)%4),base64=(base64String+padding).replace(/-/g,'+').replace(/_/g,'/'),raw=atob(base64);return Uint8Array.from([...raw].map(c=>c.charCodeAt(0)))}
 async function enablePush(){if(!('serviceWorker' in navigator&&'PushManager' in window&&'Notification' in window)){toast('Notificações não são compatíveis com este navegador');return}if(!window.isSecureContext){toast('Notificações exigem HTTPS ou localhost');return}const permission=await Notification.requestPermission();if(permission!=='granted'){toast('Permissão de notificações não concedida');return}const reg=await navigator.serviceWorker.ready;
- if(!config.VAPID_PUBLIC_KEY){localStorage.setItem('cycleseed.push.active','local');await reg.showNotification('Ciclo MOB',{body:'Notificações locais ativadas com sucesso.',icon:'./icons/icon-192.png',badge:'./icons/icon-192.png',tag:'cycleseed-setup'});render();return}
+ if(!config.VAPID_PUBLIC_KEY){localStorage.setItem('cycleseed.push.active','local');await reg.showNotification('Ciclo MOB',{body:'Notificações locais ativadas com sucesso.',icon:'./icons/icon-192.png',badge:'./icons/badge-96.png',tag:'cycleseed-setup'});render();return}
  try{let sub=await reg.pushManager.getSubscription();if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlBase64ToUint8Array(config.VAPID_PUBLIC_KEY)});localStorage.setItem('cycleseed.push.active','1');await savePushSubscription(sub);toast('Notificações ativadas');render()}catch(err){toast('Falha ao ativar notificações: '+(err.message||err))}}
 async function savePushSubscription(subscription){if(!db||!state.user||state.demoMode)return;const json=subscription.toJSON();const timezone=Intl.DateTimeFormat().resolvedOptions().timeZone||'America/Sao_Paulo';const payload={user_id:state.user.id,endpoint:json.endpoint,p256dh:json.keys?.p256dh,auth:json.keys?.auth,reminder_time:state.settings.reminderTime+':00',timezone,active:state.settings.reminder};const {error}=await db.from('push_subscriptions').upsert(payload,{onConflict:'user_id,endpoint'});if(error)throw error}
-async function testNotification(){markReminderUnread(true);if(!('Notification' in window)){toast('Notificações não suportadas');return}if(Notification.permission!=='granted'){await enablePush();if(Notification.permission!=='granted')return}const reg=await navigator.serviceWorker.ready;await reg.showNotification('Ciclo MOB',{body:'Seu lembrete diário está funcionando. Registre suas observações de hoje.',icon:'./icons/icon-192.png',badge:'./icons/icon-192.png',tag:'cycleseed-test',data:{url:'./'}})}
+async function testNotification(){markReminderUnread(true);if(!('Notification' in window)){toast('Notificações não suportadas');return}if(Notification.permission!=='granted'){await enablePush();if(Notification.permission!=='granted')return}const reg=await navigator.serviceWorker.ready;await reg.showNotification('Ciclo MOB',{body:'Seu lembrete diário está funcionando. Registre suas observações de hoje.',icon:'./icons/icon-192.png',badge:'./icons/badge-96.png',tag:'cycleseed-test',data:{url:'./'}})}
 async function refreshPushSettings(){if(!db||!state.user||state.demoMode)return;try{const reg=await navigator.serviceWorker.ready,sub=await reg.pushManager.getSubscription();if(sub)await savePushSubscription(sub)}catch(_){}}
 async function saveCycleCloud(c){if(!db||!state.user||state.demoMode||c.accessRole!=='owner')return;const payload={id:c.id,owner_id:state.user.id,name:c.name,start_date:c.startDate,end_date:c.endDate||null,cycle_length:Number(c.cycleLength)||28,period_length:Number(c.periodLength)||5};const {error}=await db.from('cycles').upsert(payload,{onConflict:'id'});if(error)console.warn('Cycle sync',error)}
 async function saveRecordCloud(r){const rc=state.cycles.find(c=>c.id===r.cycleId);if(!db||!state.user||state.demoMode||rc?.accessRole!=='owner')return;const payload={id:r.id,cycle_id:r.cycleId,date:r.date,sensation:r.sensation,appearance:r.appearance,bleeding:r.bleeding,pbi:Boolean(r.pbi),chart_stamp:r.chartStamp||null,peak_marker:r.peakMarker||null,notes:r.notes||'',recorded_by:state.user.id};const {error}=await db.from('cycle_records').upsert(payload,{onConflict:'id'});if(error)console.warn('Record sync',error)}

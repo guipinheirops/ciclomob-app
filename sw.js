@@ -1,8 +1,8 @@
 self.addEventListener('message',event=>{if(event.data?.type==='SKIP_WAITING')self.skipWaiting()});
 
-const CACHE='ciclo-mob-v56';
+const CACHE='ciclo-mob-v58';
 const META_CACHE='cycleseed-meta';
-const ASSETS=['./','./index.html','./styles.css','./app.js','./config.js','./manifest.webmanifest','./icons/icon-192.png','./icons/favicon.svg'];
+const ASSETS=['./','./index.html','./styles.css','./app.js','./config.js','./manifest.webmanifest','./icons/icon-192.png','./icons/favicon.svg','./icons/badge-96.png'];
 
 self.addEventListener('install',event=>{
   self.skipWaiting();
@@ -42,7 +42,7 @@ self.addEventListener('push',event=>{
     self.registration.showNotification(data.title||'Ciclo MOB',{
       body:data.body,
       icon:'./icons/icon-192.png',
-      badge:'./icons/icon-192.png',
+      badge:'./icons/badge-96.png',
       tag:data.tag||'cycleseed-reminder',
       renotify:false,
       data:{url:data.url||'./'}

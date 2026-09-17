@@ -1135,3 +1135,23 @@ body.dark .lesson-hero.branded-feature-card{
     padding-right:6px !important;
   }
 }
+
+/* v57 — navegação inicial e ações do relatório */
+.pdf-actions{
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr) !important;
+  gap:10px !important;
+}
+.pdf-actions button{
+  width:100% !important;
+  min-width:0 !important;
+  margin:0 !important;
+}
+@media(max-width:360px){
+  .pdf-actions{gap:7px !important}
+  .pdf-actions button{
+    font-size:.68rem !important;
+    padding-left:7px !important;
+    padding-right:7px !important;
+  }
+}
