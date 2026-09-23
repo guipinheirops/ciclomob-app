@@ -1299,3 +1299,17 @@ body.dark .record-baby{
 .reminder-time-input-wrap{padding:4px;border-radius:13px;background:var(--surface);border:1px solid var(--border);box-shadow:var(--shadow)}
 .reminder-time-input-wrap input[type="time"]{min-width:108px;border:0!important;background:transparent!important;font-size:1rem;font-weight:800;text-align:center;padding:8px 10px!important;color:var(--text);outline:none}
 @media(max-width:360px){.observation-pair{gap:7px!important}.observation-pair label{font-size:.69rem}.observation-pair select{font-size:.76rem;padding-left:8px;padding-right:8px}.reminder-time-card{gap:8px;padding:10px}.reminder-time-input-wrap input[type="time"]{min-width:94px;font-size:.9rem;padding:7px 6px!important}}
+
+/* v64 — refinamento do horário */
+.reminder-time-input-wrap input[type="time"]{
+  min-width:92px !important;
+  width:92px !important;
+  padding-left:7px !important;
+  padding-right:7px !important;
+}
+@media(max-width:360px){
+  .reminder-time-input-wrap input[type="time"]{
+    min-width:84px !important;
+    width:84px !important;
+  }
+}
