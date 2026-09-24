@@ -30,7 +30,7 @@ const lessons = [
   ]},
   {id:'pbi',title:'4. Conheça o PBI',time:'6 min',text:'Entenda o que significa Padrão Básico de Infertilidade e por que ele não deve ser marcado sem aprendizado adequado.',sections:[
     ['O que é PBI','PBI significa Padrão Básico de Infertilidade. No app, a marcação é manual e serve apenas para registrar uma identificação feita pela usuária conforme seu aprendizado do método.'],
-    ['Não conclua pelo aplicativo','O Ciclo MOB não identifica PBI automaticamente. O indicador de fertilidade usa somente as observações e marcações MOB registradas pela própria usuária; a interpretação do método continua dependendo do aprendizado e da orientação qualificada.'],
+    ['Não conclua pelo aplicativo','O Ciclo MOB não identifica PBI automaticamente. A usuária reconhece e marca seu PBI conforme o aprendizado; o aplicativo apenas organiza as regras e os estados a partir desses registros.'],
     ['Aprenda com orientação','A identificação e aplicação das regras do Método de Ovulação Billings devem ser aprendidas com orientação qualificada, especialmente antes de usar os registros para decisões reprodutivas.']
   ]},
   {id:'review',title:'5. Revise o ciclo completo',time:'7 min',text:'Use o gráfico, o calendário e o resumo para revisar a sequência de observações do ciclo selecionado.',sections:[
@@ -42,7 +42,7 @@ const lessons = [
     ['• Vermelho','Usado no gráfico para identificar registros marcados manualmente como sangramento.'],
     ['I Verde','Usado para a marcação manual de padrão seco conforme o aprendizado do método.'],
     ['O Branco','Usado para registros associados à observação de muco conforme a classificação manual da usuária.'],
-    ['= Amarelo','Usado para uma marcação manual de padrão conforme o aprendizado e a orientação recebida.'],
+    ['= Amarelo','Usado para PBI com fluxo contínuo e outras situações ensinadas no método; a classificação deve seguir orientação qualificada.'],
     ['? Sem selo','Indica que aquele registro ainda não recebeu uma classificação visual no gráfico.']
   ]},
   {id:'sharing',title:'7. Compartilhe com responsabilidade',time:'4 min',text:'Use o histórico como apoio ao acompanhamento com parceiro(a), instrutora ou profissional.',sections:[
@@ -93,7 +93,7 @@ nav.forEach(b=>b.addEventListener('click',()=>{
 function daysBetween(a,b){return Math.floor((new Date(b+'T12:00:00')-new Date(a+'T12:00:00'))/86400000)}
 function addDays(s,n){const d=new Date(s+'T12:00:00');d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)}
 function cycleDay(date=TODAY){const c=activeCycle();if(!c)return null;const diff=daysBetween(c.startDate,date);if(diff<0||(c.endDate&&date>c.endDate))return null;return diff+1}
-function estimatedPhase(day){if(!day)return 'Sem ciclo configurado';const s=mobFertilityStatus(activeCycle());return s.label}
+function estimatedPhase(day){if(!day)return 'Sem ciclo configurado';const s=mobDayStatus(activeCycle());return s.label}
 
 function isHeavyBleedingMob(r){
  return ['moderado','intenso'].includes(String(r?.bleeding||'').toLowerCase());
@@ -106,49 +106,46 @@ function mobObservationSignature(r){
   String(r.chartStamp||'').trim().toLowerCase()
  ].join('|');
 }
+function mobRecordsUntil(c,untilDate=TODAY){
+ if(!c)return [];
+ const limit=c.endDate&&untilDate>c.endDate?c.endDate:untilDate;
+ return state.records
+  .filter(r=>r.cycleId===c.id&&r.date>=c.startDate&&r.date<=limit)
+  .sort((a,b)=>a.date.localeCompare(b.date));
+}
 function mobFertilityStatusAt(c,untilDate=TODAY){
  if(!c)return {key:'observing',active:false,label:'Em observação',detail:'Sem dados suficientes'};
- if(c.endDate&&untilDate>c.endDate)untilDate=c.endDate;
- const records=state.records
-   .filter(r=>r.cycleId===c.id&&r.date>=c.startDate&&r.date<=untilDate)
-   .sort((a,b)=>a.date.localeCompare(b.date));
+ const records=mobRecordsUntil(c,untilDate);
  if(!records.length)return {key:'observing',active:false,label:'Em observação',detail:'Registre as observações diárias para acompanhar o padrão MOB'};
 
  let hasEstablishedPbi=false;
  let pbiSignature='';
  let changeActive=false;
  let returnedPbiDays=0;
- let peakCompleted=false;
  let fertile=false;
+ let plus3Date='';
 
  for(const r of records){
    const marker=String(r.peakMarker||'');
    const isPbi=Boolean(r.pbi);
    const sig=mobObservationSignature(r);
 
-   // Regra do Ápice: Pico, +1, +2 e +3 continuam dentro do período potencialmente fértil.
+   // Regra do Ápice: Pico, +1, +2 e +3 permanecem potencialmente férteis.
    if(['peak','plus1','plus2','plus3'].includes(marker)){
      fertile=true;
      changeActive=true;
      returnedPbiDays=0;
-     if(marker==='plus3')peakCompleted=true;
+     if(marker==='plus3')plus3Date=r.date;
      continue;
    }
 
-   // A partir do dia seguinte ao +3, a fase pós-Pico é tratada como não fértil,
-   // salvo se a própria usuária registrar uma nova mudança posteriormente.
-   if(peakCompleted){
-     if(isPbi){
-       fertile=false;
-       continue;
-     }
-     peakCompleted=false;
-     changeActive=true;
-     fertile=true;
-     returnedPbiDays=0;
+   // Após o +3 confirmado, inicia-se a fase pós-Pico.
+   if(plus3Date && r.date>plus3Date){
+     fertile=false;
+     continue;
    }
 
-   // Sangramento moderado/intenso pode mascarar o sinal de fertilidade.
+   // Sangramento forte pode ocultar mudança do padrão.
    if(isHeavyBleedingMob(r)){
      fertile=true;
      changeActive=true;
@@ -156,7 +153,7 @@ function mobFertilityStatusAt(c,untilDate=TODAY){
      continue;
    }
 
-   // PBI é sempre uma identificação manual da usuária.
+   // O PBI é sempre uma identificação manual da usuária.
    if(isPbi){
      if(!hasEstablishedPbi){
        hasEstablishedPbi=true;
@@ -170,8 +167,8 @@ function mobFertilityStatusAt(c,untilDate=TODAY){
      const returnedToSamePbi=!pbiSignature||sig===pbiSignature;
      if(changeActive&&returnedToSamePbi){
        returnedPbiDays++;
-       // Regra dos Primeiros Dias 3: aguardar 3 dias completos de retorno ao PBI;
-       // por segurança em um app diário, o indicador só apaga no 4º dia consecutivo de PBI.
+       // Regra dos Primeiros Dias: três dias completos de espera;
+       // o estado não fértil só retorna no 4º dia consecutivo do mesmo PBI.
        if(returnedPbiDays>=4){
          fertile=false;
          changeActive=false;
@@ -189,13 +186,13 @@ function mobFertilityStatusAt(c,untilDate=TODAY){
      }
    }
 
-   // Sem PBI estabelecido, o app não deve afirmar infertilidade.
+   // Sem PBI estabelecido, o aplicativo não afirma infertilidade pré-Pico.
    if(!hasEstablishedPbi){
      fertile=false;
      continue;
    }
 
-   // Qualquer dia que interrompa o PBI é considerado mudança/potencial fertilidade.
+   // Qualquer interrupção do PBI antes do Pico é tratada como mudança.
    if(!isPbi){
      changeActive=true;
      fertile=true;
@@ -203,16 +200,55 @@ function mobFertilityStatusAt(c,untilDate=TODAY){
    }
  }
 
- const current=records[records.length-1];
- if(!hasEstablishedPbi && !fertile){
+ if(fertile){
+   return {key:'fertile',active:true,label:'Fértil',detail:'Mudança do PBI, sangramento que pode mascarar o padrão ou fase Pico/+1/+2/+3'};
+ }
+ if(!hasEstablishedPbi && !plus3Date){
    return {key:'observing',active:false,label:'Em observação',detail:'PBI ainda não estabelecido manualmente'};
  }
- return fertile
-   ? {key:'fertile',active:true,label:'Fértil',detail:'Mudança do PBI ou fase Pico/+1/+2/+3 conforme registros MOB'}
-   : {key:'infertile',active:false,label:'Não fértil',detail:'PBI ou fase pós-Pico conforme marcações registradas'};
+ return {key:'infertile',active:false,label:'Não fértil',detail:plus3Date?'Fase pós-Pico após +3':'PBI registrado sem mudança ativa'};
+}
+function mobDayStatusAt(c,untilDate=TODAY){
+ const base=mobFertilityStatusAt(c,untilDate);
+ if(base.active)return {...base,liberated:false};
+
+ const records=mobRecordsUntil(c,untilDate);
+ const current=records.find(r=>r.date===untilDate);
+ if(!current)return {...base,key:'observing',label:'Em observação',liberated:false,detail:'Sem registro completo neste dia'};
+
+ // Período inicial de aprendizagem: mínimo de 14 dias de observações antes de exibir "Liberado".
+ const first=records[0];
+ const observedSpan=first?daysBetween(first.date,untilDate)+1:0;
+ if(observedSpan<14){
+   return {key:'learning',active:false,label:'Aprendizado',liberated:false,detail:'Período inicial de observação do padrão: mantenha os registros diários e confirme o PBI com orientação qualificada'};
+ }
+
+ // Sangramento moderado/intenso não recebe estado "Liberado".
+ if(isHeavyBleedingMob(current)){
+   return {key:'observing',active:false,label:'Em observação',liberated:false,detail:'Sangramento pode mascarar sinais de mudança do padrão'};
+ }
+
+ // Regra das noites alternadas no PBI: se houve relação no dia anterior, hoje não é marcado como liberado.
+ const previous=records.find(r=>r.date===addDays(untilDate,-1));
+ if(previous?.intercourse){
+   return {key:'observing',active:false,label:'Em observação',liberated:false,detail:'Dia seguinte à relação: observar o padrão antes de nova relação'};
+ }
+
+ // Depois do +3, a fase pós-Pico pode ser marcada como liberada.
+ const latestPlus3=[...records].reverse().find(r=>r.peakMarker==='plus3'&&r.date<untilDate);
+ if(latestPlus3){
+   return {key:'liberated',active:false,label:'Liberado',liberated:true,detail:'Fase pós-Pico após o +3 registrado'};
+ }
+
+ // Antes do Pico, somente PBI manualmente reconhecido e sem mudança ativa recebe "Liberado".
+ if(base.key==='infertile' && current.pbi){
+   return {key:'liberated',active:false,label:'Liberado',liberated:true,detail:'PBI reconhecido e noite disponível pela regra de alternância'};
+ }
+
+ return {...base,key:'observing',label:'Em observação',liberated:false};
 }
 function mobFertilityStatus(c){return mobFertilityStatusAt(c,TODAY)}
-
+function mobDayStatus(c){return mobDayStatusAt(c,TODAY)}
 function countStreak(){const dates=new Set(activeRecords().map(r=>r.date));let c=0,d=new Date();while(dates.has(d.toISOString().slice(0,10))){c++;d.setDate(d.getDate()-1)}return c}
 function todayView(){
  const c=currentOpenCycle()||activeCycle();if(c&&state.activeCycleId!==c.id)state.activeCycleId=c.id;
@@ -227,8 +263,8 @@ function todayView(){
   <div class="grid-2 observation-pair"><div class="field"><label>Sensação</label><select name="sensation">${['Seca','Úmida','Molhada','Escorregadia','Outra'].map(x=>`<option>${x}</option>`).join('')}</select></div><div class="field"><label>Aparência observada</label><select name="appearance" required><option value="" selected disabled>Selecione</option>${['Sem observação','Opaca','Transparente','Elástica','Outra'].map(x=>`<option value="${x}">${x}</option>`).join('')}</select></div></div>
   <div class="grid-2"><div class="field"><label>Sangramento</label><select name="bleeding">${['Não','Leve','Moderado','Intenso'].map(x=>`<option>${x}</option>`).join('')}</select></div><div class="field"><label>PBI</label><select name="pbi"><option value="false">Não marcar</option><option value="true">Marcar manualmente</option></select></div></div>
   <div class="field"><label>Teve relação?</label><select name="intercourse"><option value="false">Não</option><option value="true">Sim</option></select></div>
-  <div class="grid-2 mob-entry-fields"><div class="field"><label>Selo do gráfico</label><select name="chartStamp" required><option value="" selected disabled>Selecione o selo</option><option value="red">Vermelho · sangramento</option><option value="green">Verde · seco</option><option value="white">Branco · muco</option><option value="yellow">Amarelo · padrão marcado</option></select></div><div class="field"><label>Marcação especial</label><select name="peakMarker"><option value="">Nenhuma</option><option value="peak">Pico</option><option value="plus1">Pico +1</option><option value="plus2">Pico +2</option><option value="plus3">Pico +3</option></select></div></div>
-  <p class="field-help">Use PBI, Pico e +1/+2/+3 somente conforme seu aprendizado do Método Billings. O indicador fértil apenas reflete essas marcações e as mudanças registradas; ele não substitui a interpretação do método.</p>
+  <div class="grid-2 mob-entry-fields"><div class="field"><label>Selo do gráfico</label><select name="chartStamp" required><option value="" selected disabled>Selecione o selo</option><option value="red">Vermelho · sangramento</option><option value="green">Verde · seco</option><option value="white">Branco · muco / pós-relação</option><option value="yellow">Amarelo · PBI com fluxo contínuo</option></select></div><div class="field"><label>Ápice</label><select name="confirmPreviousPeak"><option value="false">Não confirmar</option><option value="true">Confirmar ontem como Pico</option></select><small class="field-help compact">O Pico é confirmado retrospectivamente quando a sensação escorregadia termina.</small></div></div>
+  <p class="field-help">Marque o PBI somente quando ele já tiver sido reconhecido conforme seu aprendizado. O Pico é confirmado retrospectivamente; +1/+2/+3 são organizados automaticamente pelo aplicativo.</p>
   <div class="field"><label>Anotações</label><textarea name="notes" placeholder="Horário, sensação ao longo do dia, observações..."></textarea></div>
   <button class="primary" type="submit">Salvar registro</button>
  </form></section>`):`<section class="card readonly-card"><strong>Ciclo encerrado</strong><p class="muted">Os registros desse ciclo permanecem disponíveis para consulta. Volte ao ciclo atual para fazer o registro de hoje.</p></section>`}
@@ -237,15 +273,15 @@ function todayView(){
 function cycleManager(){
  const ordered=orderedCycles(),c=activeCycle(),idx=Math.max(0,ordered.findIndex(x=>x.id===c?.id)),prev=ordered[idx-1],next=ordered[idx+1];
  const period=c?`${fmtDate(c.startDate,{day:'2-digit',month:'short',year:'numeric'})} ${c.endDate?`→ ${fmtDate(c.endDate,{day:'2-digit',month:'short',year:'numeric'})}`:'→ Em andamento'}`:'';
- const mobStatus=mobFertilityStatus(c),fertile=mobStatus.active;
+ const mobStatus=mobDayStatus(c),fertile=mobStatus.active;
  return `<section class="card cycle-manager cycle-carousel branded-feature-card cycle-feature-card ${fertile?'fertile-active':''}">
- <div class="cycle-carousel-row"><button class="cycle-arrow" data-cycle-move="-1" ${prev?'':'disabled'} aria-label="Ciclo anterior"><svg viewBox="0 0 24 24" fill="none"><path d="m14.5 5-7 7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="cycle-carousel-copy"><div class="cycle-title-line"><strong>${esc(cycleDisplayName(c))}</strong>${c?.endDate?'':`<span class="cycle-state open">Atual</span>`}</div><small>${esc(period)}</small><span class="fertility-status cycle-fertility-status"><span class="fertility-baby ${fertile?'active':''}" title="${esc(mobStatus.detail)}" aria-label="${esc(mobStatus.detail)}"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12.2" r="6.1" stroke="currentColor" stroke-width="1.7"/><path d="M9.9 8.1c.4-1.5 1.6-2.5 3.1-2.5 1.05 0 1.9.38 2.55 1.04" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="9.8" cy="12" r=".8" fill="currentColor"/><circle cx="14.2" cy="12" r=".8" fill="currentColor"/><path d="M9.8 15c1.4 1 3 1 4.4 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M12.1 5.7c-.65-1.3.2-2.7 1.65-2.7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span><span class="fertility-status-text">${esc(mobStatus.label)}</span></span></div><button class="cycle-arrow" data-cycle-move="1" ${next?'':'disabled'} aria-label="Próximo ciclo"><svg viewBox="0 0 24 24" fill="none"><path d="m9.5 5 7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div><div class="cycle-position" aria-label="${idx+1} de ${ordered.length}">${ordered.map((x,i)=>`<i class="${i===idx?'active':''}"></i>`).join('')}</div></section>`
+ <div class="cycle-carousel-row"><button class="cycle-arrow" data-cycle-move="-1" ${prev?'':'disabled'} aria-label="Ciclo anterior"><svg viewBox="0 0 24 24" fill="none"><path d="m14.5 5-7 7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="cycle-carousel-copy"><div class="cycle-title-line"><strong>${esc(cycleDisplayName(c))}</strong>${c?.endDate?'':`<span class="cycle-state open">Atual</span>`}</div><small>${esc(period)}</small><span class="fertility-status cycle-fertility-status">${fertile?`<span class="fertility-baby active" title="${esc(mobStatus.detail)}" aria-label="${esc(mobStatus.detail)}"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12.2" r="6.1" stroke="currentColor" stroke-width="1.7"/><path d="M9.9 8.1c.4-1.5 1.6-2.5 3.1-2.5 1.05 0 1.9.38 2.55 1.04" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="9.8" cy="12" r=".8" fill="currentColor"/><circle cx="14.2" cy="12" r=".8" fill="currentColor"/><path d="M9.8 15c1.4 1 3 1 4.4 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M12.1 5.7c-.65-1.3.2-2.7 1.65-2.7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span>`:''}<span class="fertility-status-text">${esc(mobStatus.label)}</span></span></div><button class="cycle-arrow" data-cycle-move="1" ${next?'':'disabled'} aria-label="Próximo ciclo"><svg viewBox="0 0 24 24" fill="none"><path d="m9.5 5 7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div><div class="cycle-position" aria-label="${idx+1} de ${ordered.length}">${ordered.map((x,i)=>`<i class="${i===idx?'active':''}"></i>`).join('')}</div></section>`
 }
 function cycleView(){return `${cycleManager()}<div class="segmented"><button data-cycle-tab="chart" class="${state.cycleTab==='chart'?'active':''}">Gráfico</button><button data-cycle-tab="calendar" class="${state.cycleTab==='calendar'?'active':''}">Calendário</button><button data-cycle-tab="summary" class="${state.cycleTab==='summary'?'active':''}">Resumo</button></div>${state.cycleTab==='calendar'?calendarView():state.cycleTab==='chart'?historyView():summaryView()}`}
 function calendarView(){
  const cur=state.calendarCursor,y=cur.getFullYear(),m=cur.getMonth(),first=new Date(y,m,1),last=new Date(y,m+1,0),offset=(first.getDay()+6)%7;
  const cells=[];for(let i=0;i<offset;i++)cells.push('<div></div>');
- for(let d=1;d<=last.getDate();d++){const date=new Date(y,m,d,12).toISOString().slice(0,10),rec=activeRecords().find(r=>r.date===date),cd=cycleDay(date);let cls='calendar-day';if(date===TODAY)cls+=' today';if(rec)cls+=' has-record';const hasBleeding=Boolean(rec&&rec.bleeding&&rec.bleeding!=='Não');if(hasBleeding)cls+=' bleeding';const inCycle=Boolean(cd&&date<=TODAY),fertileDay=inCycle&&mobFertilityStatusAt(activeCycle(),date).active;if(fertileDay)cls+=' mob-fertile-day';const stampClass=rec?` stamp-${rec.chartStamp||'unclassified'}`:'';if(rec&&rec.sensation==='Seca'&&rec.chartStamp==='green'&&!fertileDay)cls+=' dry-liberated-day';cells.push(`<button class="${cls}" data-date="${date}"><span>${d}</span>${cd?`<small>D${cd}</small>`:''}${rec?`<i class="calendar-record-mark${stampClass}"></i>`:''}</button>`)}
+ for(let d=1;d<=last.getDate();d++){const date=new Date(y,m,d,12).toISOString().slice(0,10),rec=activeRecords().find(r=>r.date===date),cd=cycleDay(date);let cls='calendar-day';if(date===TODAY)cls+=' today';if(rec)cls+=' has-record';const hasBleeding=Boolean(rec&&rec.bleeding&&rec.bleeding!=='Não');if(hasBleeding)cls+=' bleeding';const inCycle=Boolean(cd&&date<=TODAY),dayStatus=inCycle?mobDayStatusAt(activeCycle(),date):{active:false,liberated:false};if(dayStatus.active)cls+=' mob-fertile-day';if(dayStatus.liberated)cls+=' dry-liberated-day';const stampClass=rec?` stamp-${rec.chartStamp||'unclassified'}`:'';cells.push(`<button class="${cls}" data-date="${date}" title="${esc(dayStatus.detail||'')}"><span>${d}</span>${cd?`<small>D${cd}</small>`:''}${rec?`<i class="calendar-record-mark${stampClass}"></i>`:''}</button>`)}
  const monthLabel=new Intl.DateTimeFormat('pt-BR',{month:'long',year:'numeric'}).format(cur).replace(/\s+de\s+/i,' / ');
  const nextPeriod=nextEstimatedPeriod();
  const estimateCard=(state.demoMode||state.settings.cycleConfigured===true)?`<section class="card next-cycle-card"><div class="summary-row"><div><span class="label">Estimativa organizacional</span><h3 style="margin:.25rem 0">Próximo início de ciclo</h3><p class="muted">${fmtDate(nextPeriod,{day:'2-digit',month:'long',year:'numeric'})}</p></div><div class="cycle-badge">${cycleLength()}d</div></div></section>`:'';
@@ -254,7 +290,7 @@ function calendarView(){
 function nextEstimatedPeriod(){const c=activeCycle();return c?addDays(c.startDate,cycleLength()):TODAY}
 function chartView(){return mobChartView()}
 function mobStampMeta(r){
- const map={red:{label:'Vermelho',symbol:'•',short:'Sangramento'},green:{label:'Verde',symbol:'I',short:'Seco'},white:{label:'Branco',symbol:'O',short:'Muco'},yellow:{label:'Amarelo',symbol:'=',short:'Padrão marcado'}};
+ const map={red:{label:'Vermelho',symbol:'•',short:'Sangramento'},green:{label:'Verde',symbol:'I',short:'Seco'},white:{label:'Branco',symbol:'O',short:'Muco'},yellow:{label:'Amarelo',symbol:'=',short:'PBI com fluxo contínuo'}};
  return map[r.chartStamp]||{label:'Não classificado',symbol:'?',short:'Sem selo'}
 }
 function peakLabel(v){return ({peak:'Pico',plus1:'+1',plus2:'+2',plus3:'+3'})[v]||''}
@@ -290,13 +326,13 @@ function historyView(){
    if(!r){
      return `<article class="mob-graph-row compact empty ${isToday?'is-today':''} ${isFuture?'is-future':''}"><div class="mob-cycle-day"><small>Dia</small><strong>${day}</strong></div><span class="mob-graph-stamp unclassified" title="Sem registro"><b>?</b></span><div class="mob-graph-content"><span class="mob-graph-date">${fmtDate(date,{day:'2-digit',month:'2-digit'})}</span><div class="mob-graph-summary"><span>${isFuture?'Sem registro':'Sem registro'}</span></div></div></article>`;
    }
-   const meta=mobStampMeta(r),peak=peakLabel(r.peakMarker),editable=canEditRecord(r),fertileRecord=mobFertilityStatusAt(c,date).active;
+   const meta=mobStampMeta(r),peak=peakLabel(r.peakMarker),editable=canEditRecord(r),dayStatus=mobDayStatusAt(c,date),fertileRecord=dayStatus.active;
    const summary=[r.sensation||'—',r.appearance||'—',r.bleeding&&r.bleeding!=='Não'?`Sangramento: ${r.bleeding}`:null,peak?`Pico: ${peak}`:null].filter(Boolean).join(' · ');
    const heart=r.intercourse?`<span class="record-heart" title="Relação informada" aria-label="Relação informada"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 20.2 4.4 12.9C.4 9.1 2.7 3 7.6 3c2 0 3.5 1 4.4 2.3C12.9 4 14.4 3 16.4 3c4.9 0 7.2 6.1 3.2 9.9L12 20.2Z"/></svg></span>`:'';
    const baby=fertileRecord?`<span class="record-baby" title="Período fértil" aria-label="Período fértil"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12.2" r="6.1" stroke="currentColor" stroke-width="1.7"/><path d="M9.9 8.1c.4-1.5 1.6-2.5 3.1-2.5 1.05 0 1.9.38 2.55 1.04" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="9.8" cy="12" r=".8" fill="currentColor"/><circle cx="14.2" cy="12" r=".8" fill="currentColor"/><path d="M9.8 15c1.4 1 3 1 4.4 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>`:'';
    return `<article class="mob-graph-row compact ${editable?'is-editable':'is-locked'} ${isToday?'is-today':''} ${fertileRecord?'fertile-record':''}" ${isToday?'data-current-day="1"':''} ${editable?`data-edit="${r.id}" role="button" tabindex="0" aria-label="Editar registro de hoje"`:`data-locked-record="${r.id}" role="button" tabindex="0" aria-label="Registro bloqueado para edição"`}><div class="mob-cycle-day ${fertileRecord?'fertile-cycle-day':''}"><small>Dia</small><strong>${day}</strong></div><span class="mob-graph-stamp ${r.chartStamp||'unclassified'}" title="${esc(meta.label)}"><b>${meta.symbol}</b></span><div class="mob-graph-content"><div class="mob-graph-date-row"><span class="mob-graph-date">${fmtDate(date,{day:'2-digit',month:'2-digit'})}${isToday?' · Hoje':''}</span><span class="record-date-icons">${baby}${heart}</span></div><div class="mob-graph-summary"><span>${esc(summary||'Registro realizado')}</span></div></div></article>`;
  }).join('');
- return `<section class="mob-graph-view"><div class="mob-month-list mob-flat-list compact-cycle-list">${rows}</div><button class="cycle-config-footer-card" type="button" data-go="profile" aria-label="Abrir configurações do ciclo"><div><span>${len} dias configurados</span><small>Toque para ajustar no perfil</small></div><span class="cycle-more-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/></svg></span></button><div class="notice mob-graph-notice">Os selos são informados manualmente e não representam interpretação automática de fertilidade.</div></section>`
+ return `<section class="mob-graph-view"><div class="mob-month-list mob-flat-list compact-cycle-list">${rows}</div><button class="cycle-config-footer-card" type="button" data-go="profile" aria-label="Abrir configurações do ciclo"><div><span>${len} dias configurados</span><small>Toque para ajustar no perfil</small></div><span class="cycle-more-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/></svg></span></button><div class="notice mob-graph-notice">Os selos e o PBI são informados manualmente. Os estados Fértil, Liberado e Em observação organizam as regras a partir desses registros e não substituem orientação qualificada.</div></section>`
 }
 function editView(){
  const r=activeRecords().find(x=>x.id===state.editRecordId);
@@ -307,7 +343,7 @@ function editView(){
   <div class="grid-2 observation-pair"><div class="field"><label>Sensação</label><select name="sensation">${['Seca','Úmida','Molhada','Escorregadia','Outra'].map(x=>`<option ${r.sensation===x?'selected':''}>${x}</option>`).join('')}</select></div><div class="field"><label>Aparência observada</label><select name="appearance" required>${['Sem observação','Opaca','Transparente','Elástica','Outra'].map(x=>`<option value="${x}" ${String(r.appearance||'').trim()===x?'selected':''}>${x}</option>`).join('')}</select></div></div>
   <div class="grid-2"><div class="field"><label>Sangramento</label><select name="bleeding">${['Não','Leve','Moderado','Intenso'].map(x=>`<option ${r.bleeding===x?'selected':''}>${x}</option>`).join('')}</select></div><div class="field"><label>PBI</label><select name="pbi"><option value="false" ${!r.pbi?'selected':''}>Não marcar</option><option value="true" ${r.pbi?'selected':''}>Marcar manualmente</option></select></div></div>
   <div class="field"><label>Teve relação?</label><select name="intercourse"><option value="false" ${!r.intercourse?'selected':''}>Não</option><option value="true" ${r.intercourse?'selected':''}>Sim</option></select></div>
-  <div class="grid-2 mob-entry-fields"><div class="field"><label>Selo do gráfico</label><select name="chartStamp" required><option value="" disabled ${!r.chartStamp?'selected':''}>Selecione o selo</option>${[['red','Vermelho · sangramento'],['green','Verde · seco'],['white','Branco · muco'],['yellow','Amarelo · padrão marcado']].map(([v,l])=>`<option value="${v}" ${String(r.chartStamp||'')===v?'selected':''}>${l}</option>`).join('')}</select></div><div class="field"><label>Marcação especial</label><select name="peakMarker">${[['','Nenhuma'],['peak','Pico'],['plus1','Pico +1'],['plus2','Pico +2'],['plus3','Pico +3']].map(([v,l])=>`<option value="${v}" ${String(r.peakMarker||'')===v?'selected':''}>${l}</option>`).join('')}</select></div></div>
+  <div class="grid-2 mob-entry-fields"><div class="field"><label>Selo do gráfico</label><select name="chartStamp" required><option value="" disabled ${!r.chartStamp?'selected':''}>Selecione o selo</option>${[['red','Vermelho · sangramento'],['green','Verde · seco'],['white','Branco · muco / pós-relação'],['yellow','Amarelo · PBI com fluxo contínuo']].map(([v,l])=>`<option value="${v}" ${String(r.chartStamp||'')===v?'selected':''}>${l}</option>`).join('')}</select></div><div class="field"><label>Ápice</label><select name="confirmPreviousPeak"><option value="false">Não confirmar</option><option value="true">Confirmar ontem como Pico</option></select><small class="field-help compact">Pico e +1/+2/+3 são organizados a partir da confirmação retrospectiva.</small></div></div>
   <p class="field-help">A classificação é manual e deve seguir seu aprendizado do Método Billings.</p>
   <div class="field"><label>Anotações</label><textarea name="notes" placeholder="Horário, sensação ao longo do dia, observações...">${esc(r.notes||'')}</textarea></div>
   <button class="primary" type="submit">Salvar alterações</button>
@@ -380,7 +416,6 @@ function profileView(){
  ${cycleCard}
  <section class="card"><div class="profile-row appearance-row"><div><strong>Modo de aparência</strong><div class="label">${state.settings.theme==='dark'?'Escuro · ameixa/cacau':'Claro'}</div></div><button id="themeToggleProfile" class="theme-choice" aria-label="Alternar modo de aparência"><span>${state.settings.theme==='dark'?'☾':'☀'}</span>${state.settings.theme==='dark'?'Escuro':'Claro'}</button></div></section>
  <section class="card"><h3 style="margin-top:0">Relatório em PDF</h3><p class="muted">Gere um relatório com resumo, configurações do ciclo e histórico de registros para arquivar ou compartilhar.</p><div class="pdf-actions"><button id="pdfBtn" class="primary">Gerar PDF</button><button id="exportBtn" class="secondary">Exportar CSV</button></div></section>
- <section class="card"><h3 style="margin-top:0">Privacidade e dados</h3><p class="muted">Você controla os acessos e pode exportar seus dados a qualquer momento.</p><div class="profile-data-actions"><button id="backupBtn" class="secondary">Baixar backup</button><button id="clearBtn" class="danger">Apagar dados locais</button></div></section>
  ${sessionCard}`
 }
 
@@ -587,8 +622,8 @@ function bind(){
  document.querySelectorAll('[data-delete]').forEach(b=>b.onclick=()=>{const rec=state.records.find(r=>r.id===b.dataset.delete);if(!canEditRecord(rec)){toast('Apenas o registro de hoje pode ser alterado');return}if(confirm('Excluir o registro de hoje?')){const id=b.dataset.delete;state.records=state.records.filter(r=>r.id!==id);save();deleteRecordCloud(id);render();toast('Registro excluído')}});
  document.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>{const rec=state.records.find(r=>r.id===b.dataset.edit);if(!canEditRecord(rec)){toast('Apenas o registro de hoje pode ser alterado');return}b.classList.add('pressed');state.editRecordId=b.dataset.edit;state.editReturn=state.route==='cycle'?'cycle':'history';route('edit')});
  document.querySelectorAll('[data-locked-record]').forEach(b=>{const warn=()=>toast('Apenas o registro de hoje pode ser alterado');b.onclick=warn;b.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();warn()}}});
- const rf=document.querySelector('#recordForm');if(rf)rf.onsubmit=e=>{e.preventDefault();const fd=new FormData(rf);if(!fd.get('chartStamp')){toast('Selecione o selo do gráfico para salvar o registro');return}const targetCycle=currentOpenCycle()||activeCycle();if(!targetCycle||targetCycle.endDate){toast('Não há um ciclo aberto para registrar');return}state.activeCycleId=targetCycle.id;const rec={id:crypto.randomUUID(),cycleId:targetCycle.id,date:fd.get('date'),sensation:fd.get('sensation'),appearance:String(fd.get('appearance')||'').trim(),bleeding:fd.get('bleeding'),pbi:fd.get('pbi')==='true',intercourse:fd.get('intercourse')==='true',chartStamp:fd.get('chartStamp')||'',peakMarker:fd.get('peakMarker')||'',notes:fd.get('notes'),createdAt:Date.now()};const idx=state.records.findIndex(r=>r.cycleId===targetCycle.id&&r.date===rec.date);if(idx>=0){rec.id=state.records[idx].id;rec.createdAt=state.records[idx].createdAt;state.records[idx]=rec}else state.records.push(rec);save();saveRecordCloud(rec);render();toast('Registro do dia salvo com sucesso')};
- const erf=document.querySelector('#editRecordForm');if(erf)erf.onsubmit=e=>{e.preventDefault();const fdCheck=new FormData(erf);if(!fdCheck.get('chartStamp')){toast('Selecione o selo do gráfico para salvar o registro');return}const original=activeRecords().find(r=>r.id===state.editRecordId);if(!original){toast('Registro não encontrado');state.cycleTab='chart';route('cycle');return}if(!canEditRecord(original)){toast('Apenas o registro de hoje pode ser alterado');state.cycleTab='chart';route('cycle');return}const fd=fdCheck,date=TODAY;const conflict=activeRecords().find(r=>r.date===date&&r.id!==original.id);if(conflict){toast('Já existe um registro nesta data');return}const updated={...original,date,sensation:fd.get('sensation'),appearance:String(fd.get('appearance')||'').trim(),bleeding:fd.get('bleeding'),pbi:fd.get('pbi')==='true',intercourse:fd.get('intercourse')==='true',chartStamp:fd.get('chartStamp')||'',peakMarker:fd.get('peakMarker')||'',notes:fd.get('notes'),updatedAt:Date.now()};const idx=state.records.findIndex(r=>r.id===original.id);state.records[idx]=updated;save();saveRecordCloud(updated);state.editRecordId=null;const target=state.editReturn||'cycle';if(target==='cycle')state.cycleTab='chart';route(target);toast('Registro atualizado com sucesso')};
+ const rf=document.querySelector('#recordForm');if(rf)rf.onsubmit=async e=>{e.preventDefault();const fd=new FormData(rf);if(!fd.get('chartStamp')){toast('Selecione o selo do gráfico para salvar o registro');return}const targetCycle=currentOpenCycle()||activeCycle();if(!targetCycle||targetCycle.endDate){toast('Não há um ciclo aberto para registrar');return}state.activeCycleId=targetCycle.id;let rec={id:crypto.randomUUID(),cycleId:targetCycle.id,date:fd.get('date'),sensation:fd.get('sensation'),appearance:String(fd.get('appearance')||'').trim(),bleeding:fd.get('bleeding'),pbi:fd.get('pbi')==='true',intercourse:fd.get('intercourse')==='true',chartStamp:fd.get('chartStamp')||'',peakMarker:'',notes:fd.get('notes'),createdAt:Date.now()};rec=await applyMobPeakSequence(rec,fd);const idx=state.records.findIndex(r=>r.cycleId===targetCycle.id&&r.date===rec.date);if(idx>=0){rec.id=state.records[idx].id;rec.createdAt=state.records[idx].createdAt;state.records[idx]=rec}else state.records.push(rec);save();saveRecordCloud(rec);render();toast('Registro do dia salvo com sucesso')};
+ const erf=document.querySelector('#editRecordForm');if(erf)erf.onsubmit=async e=>{e.preventDefault();const fdCheck=new FormData(erf);if(!fdCheck.get('chartStamp')){toast('Selecione o selo do gráfico para salvar o registro');return}const original=activeRecords().find(r=>r.id===state.editRecordId);if(!original){toast('Registro não encontrado');state.cycleTab='chart';route('cycle');return}if(!canEditRecord(original)){toast('Apenas o registro de hoje pode ser alterado');state.cycleTab='chart';route('cycle');return}const fd=fdCheck,date=TODAY;const conflict=activeRecords().find(r=>r.date===date&&r.id!==original.id);if(conflict){toast('Já existe um registro nesta data');return}let updated={...original,date,sensation:fd.get('sensation'),appearance:String(fd.get('appearance')||'').trim(),bleeding:fd.get('bleeding'),pbi:fd.get('pbi')==='true',intercourse:fd.get('intercourse')==='true',chartStamp:fd.get('chartStamp')||'',peakMarker:original.peakMarker||'',notes:fd.get('notes'),updatedAt:Date.now()};updated=await applyMobPeakSequence(updated,fd);const idx=state.records.findIndex(r=>r.id===original.id);state.records[idx]=updated;save();saveRecordCloud(updated);state.editRecordId=null;const target=state.editReturn||'cycle';if(target==='cycle')state.cycleTab='chart';route(target);toast('Registro atualizado com sucesso')};
  const psf=document.querySelector('#profileSetupForm');if(psf)psf.onsubmit=async e=>{e.preventDefault();const fd=new FormData(psf);state.settings.profileName=String(fd.get('profileName')||'').trim();state.settings.lastPeriod=String(fd.get('lastPeriod'));state.settings.cycleLength=Math.max(15,Math.min(60,Number(fd.get('cycleLength'))||28));state.settings.periodLength=Math.max(1,Math.min(15,Number(fd.get('periodLength'))||5));state.settings.cycleConfigured=true;let c=currentOpenCycle()||activeCycle();if(!c){c={id:crypto.randomUUID(),name:'Ciclo atual',startDate:state.settings.lastPeriod,endDate:null,cycleLength:state.settings.cycleLength,periodLength:state.settings.periodLength,accessRole:'owner',ownerId:state.user?.id||null};state.cycles=[c];state.activeCycleId=c.id}else{c.startDate=state.settings.lastPeriod;c.cycleLength=state.settings.cycleLength;c.periodLength=state.settings.periodLength}markProfileConfigured();save();try{await saveProfileCloud(true);await saveAppSettingsCloud();await saveCycleCloud(c);toast('Perfil configurado com sucesso');route('today')}catch(err){console.warn('Profile sync',err);toast('Perfil salvo no aparelho, mas a sincronização falhou')}};
  document.querySelectorAll('[data-setting]').forEach(b=>b.onclick=()=>{const k=b.dataset.setting;state.settings[k]=!state.settings[k];save();saveAppSettingsCloud();if(k==='reminder')refreshPushSettings();render()});
  document.querySelectorAll('[data-open-lesson]').forEach(b=>b.onclick=()=>{state.lessonId=b.dataset.openLesson;route('lesson')});
@@ -605,6 +640,43 @@ function bind(){
  const testPush=document.querySelector('#testPushBtn');if(testPush)testPush.onclick=testNotification;
  const logout=document.querySelector('#logoutBtn');if(logout)logout.onclick=signOut;
  const themeProfile=document.querySelector('#themeToggleProfile');if(themeProfile)themeProfile.onclick=toggleTheme;
+}
+
+
+async function applyMobPeakSequence(rec,fd){
+ const c=state.cycles.find(x=>x.id===rec.cycleId);
+ if(!c)return rec;
+ const confirmPrevious=String(fd.get('confirmPreviousPeak')||'false')==='true';
+ const yesterdayDate=addDays(rec.date,-1);
+ const yesterday=state.records.find(r=>r.cycleId===rec.cycleId&&r.date===yesterdayDate);
+
+ if(confirmPrevious){
+   const currentSlippery=String(rec.sensation||'').toLowerCase()==='escorregadia';
+   const previousSlippery=String(yesterday?.sensation||'').toLowerCase()==='escorregadia';
+   if(!yesterday){
+     toast('Não há registro de ontem para confirmar como Pico.');
+   }else if(!previousSlippery||currentSlippery){
+     toast('O Pico só deve ser confirmado retrospectivamente após o fim da sensação escorregadia.');
+   }else{
+     yesterday.peakMarker='peak';
+     yesterday.updatedAt=Date.now();
+     saveRecordCloud(yesterday);
+     rec.peakMarker='plus1';
+   }
+ }
+
+ if(!rec.peakMarker){
+   const peak=[...state.records]
+     .filter(r=>r.cycleId===rec.cycleId&&r.peakMarker==='peak'&&r.date<rec.date)
+     .sort((a,b)=>b.date.localeCompare(a.date))[0];
+   if(peak){
+     const diff=daysBetween(peak.date,rec.date);
+     if(diff===1)rec.peakMarker='plus1';
+     if(diff===2)rec.peakMarker='plus2';
+     if(diff===3)rec.peakMarker='plus3';
+   }
+ }
+ return rec;
 }
 
 function exportCSV(){const rows=[['Data','Sensação','Aparência','Sangramento','PBI','Relação','Selo MOB','Marcação especial','Notas'],...activeRecords().map(r=>[r.date,r.sensation,r.appearance,r.bleeding,r.pbi?'Sim':'Não',r.intercourse?'Sim':'Não',mobStampMeta(r).label,peakLabel(r.peakMarker),r.notes])];const csv=rows.map(row=>row.map(v=>'"'+String(v??'').replaceAll('"','""')+'"').join(',')).join('\n');download('cycleseed-registros.csv','\ufeff'+csv,'text/csv;charset=utf-8');toast('CSV exportado')}
