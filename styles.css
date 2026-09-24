@@ -27,7 +27,7 @@
   --border:#e7dce4;--shadow:0 10px 30px rgba(74,48,68,.08);
 }
 [data-theme="dark"]{
-  --bg:#241b22;--surface:#332630;--surface-2:#453440;--text:#fbf4f8;--muted:#c9b7c3;--brand:#c094b3;--brand-2:#ddb6cf;
+  --bg:#241b22;--surface:#332630;--surface-2:#453440;--text:#fbf4f8;--muted:#c9b7c3;--brand:#cb6f91;--brand-2:#ddb6cf;
   --ok:#62cfaa;--warn:#efbe72;--danger:#f08a96;--border:#5b4354;--shadow:0 12px 28px rgba(0,0,0,.17);
 }
 .auth-shell{min-height:100dvh;padding:28px 18px;display:grid;place-items:center;background:radial-gradient(circle at 20% 10%,color-mix(in srgb,var(--brand) 17%,transparent),transparent 36%),var(--bg)}
@@ -620,7 +620,7 @@ html:not([data-theme="dark"]) body:not(.dark) .mob-list-row.cycle-closed-record{
 }
 [data-theme="dark"] .branded-feature-card,
 body.dark .branded-feature-card{
-  background:#c094b3 !important;
+  background:#cb6f91 !important;
   color:#fff !important;
   border-color:rgba(255,255,255,.16) !important;
 }
@@ -936,7 +936,7 @@ body.dark .fertility-baby.active+.fertility-status-text{
 }
 [data-theme="dark"] .lesson-hero.branded-feature-card,
 body.dark .lesson-hero.branded-feature-card{
-  background:#c094b3 !important;
+  background:#cb6f91 !important;
   color:#fff !important;
 }
 .lesson-hero.branded-feature-card h2,
@@ -1173,11 +1173,11 @@ body.dark .lesson-hero.branded-feature-card{
   width:7px;
   height:7px;
   border-radius:999px;
-  background:#c094b3;
+  background:#cb6f91;
   box-shadow:0 0 0 2px rgba(192,148,179,.16);
 }
 .legend .fertile-dot{
-  background:#c094b3;
+  background:#cb6f91;
   box-shadow:0 0 0 2px rgba(192,148,179,.16);
 }
 [data-theme="dark"] .calendar-day.mob-fertile-day{
