@@ -1313,3 +1313,41 @@ body.dark .record-baby{
     width:84px !important;
   }
 }
+
+/* v66 — ajustes do gráfico no tema dark */
+[data-theme="dark"] .mob-cycle-day,
+body.dark .mob-cycle-day{
+  background:var(--bg) !important;
+  border-color:var(--border) !important;
+  color:var(--text) !important;
+  box-shadow:none !important;
+}
+
+/* Dia fértil no gráfico: usa o novo rosa da marca */
+[data-theme="dark"] .mob-cycle-day.fertile-cycle-day,
+body.dark .mob-cycle-day.fertile-cycle-day{
+  background:#cb6f91 !important;
+  border-color:#cb6f91 !important;
+  color:#fff !important;
+  box-shadow:0 0 0 2px rgba(203,111,145,.12) !important;
+}
+
+/* Ícone do bebê no novo rosa */
+[data-theme="dark"] .fertility-baby,
+body.dark .fertility-baby{
+  color:#cb6f91 !important;
+  border-color:rgba(203,111,145,.48) !important;
+}
+[data-theme="dark"] .fertility-baby.active,
+body.dark .fertility-baby.active{
+  color:#cb6f91 !important;
+  border-color:#cb6f91 !important;
+  background:rgba(203,111,145,.14) !important;
+  box-shadow:0 0 0 3px rgba(203,111,145,.10),0 0 16px rgba(203,111,145,.26) !important;
+}
+
+/* Pequeno bebê da listagem também acompanha o novo rosa */
+[data-theme="dark"] .record-baby,
+body.dark .record-baby{
+  color:#cb6f91 !important;
+}
