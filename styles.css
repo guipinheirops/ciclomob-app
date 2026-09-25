@@ -1442,3 +1442,43 @@ body.dark .calendar-day.mob-fertile-day{
 .legend .stamp-white-dot{background:#f8f8fb!important;border:1px solid #d9d6dc}
 .legend .stamp-yellow-dot{background:#f4c632!important}
 [data-theme="dark"] .legend .stamp-white-dot{background:#fff!important;border-color:rgba(255,255,255,.7)}
+
+/* v70 — preenchimento dos estados do calendário */
+.calendar-day.mob-fertile-day,
+[data-theme="dark"] .calendar-day.mob-fertile-day,
+body.dark .calendar-day.mob-fertile-day{
+  background:#cb6f91 !important;
+  border-color:#cb6f91 !important;
+  color:#fff !important;
+  box-shadow:none !important;
+}
+.calendar-day.mob-fertile-day span,
+.calendar-day.mob-fertile-day small{
+  color:#fff !important;
+}
+.calendar-day.dry-liberated-day,
+[data-theme="dark"] .calendar-day.dry-liberated-day,
+body.dark .calendar-day.dry-liberated-day{
+  background:#3f7f46 !important;
+  border-color:#3f7f46 !important;
+  color:#fff !important;
+  box-shadow:none !important;
+}
+.calendar-day.dry-liberated-day span,
+.calendar-day.dry-liberated-day small{
+  color:#fff !important;
+}
+.calendar-day .calendar-record-mark,
+.calendar-day.mob-fertile-day .calendar-record-mark,
+.calendar-day.dry-liberated-day .calendar-record-mark{
+  box-shadow:none !important;
+}
+.legend .dot,
+.legend .bleed-dot,
+.legend .fertile-dot,
+.legend .liberated-dot{
+  box-shadow:none !important;
+}
+.legend .bleed-dot{background:#ef3f46 !important}
+.legend .fertile-dot{background:#cb6f91 !important}
+.legend .liberated-dot{background:#3f7f46 !important}
